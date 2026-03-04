@@ -57,4 +57,4 @@ jobs:
           production: true
 
       - name: R2 checksum validation
-        run: echo "TODO: checksum validation (see issue #14)"
+        run: 'echo "TODO: checksum validation (see issue #14)"'
