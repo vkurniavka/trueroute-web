@@ -9,7 +9,9 @@ Builds regional data packages for TrueRoute and uploads them to Cloudflare R2.
 | `pmtiles` | latest | [go-pmtiles](https://github.com/protomaps/go-pmtiles) |
 | `aws` CLI | v2 | [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) |
 | `curl` | any | pre-installed on most systems |
-| `osmium` | latest | needed for Steps 2/3 (not yet implemented) |
+| `osmium` | latest | [Osmium Tool](https://osmcode.org/osmium-tool/) — `apt install osmium-tool` or `brew install osmium-tool` |
+| `python3` | 3.9+ | pre-installed on most systems |
+| `pip install osmium` | latest | Python bindings for osmium — `pip install osmium` |
 
 ## Required Environment Variables
 
@@ -36,13 +38,26 @@ Set these in `.env.local` or export them before running:
 ./scripts/build-all-regions.sh
 ```
 
-## What it does (Step 1 — Protomaps)
+## What it does
+
+### Step 1 — Protomaps (PMTiles)
 
 1. Downloads the `.osm.pbf` extract from Geofabrik for the given region
 2. Converts to `.pmtiles` with `pmtiles convert` (minzoom=5, maxzoom=14)
 3. Uploads to R2 at `regions/{id}/maps/{id}.pmtiles`
 
-Steps 2 (geocode) and 3 (POI) are placeholder — not yet implemented.
+### Step 2 — Geocode SQLite Index
+
+1. Filters OSM data for named places (`n/name=*`) and addresses (`n/addr:street=*`) using `osmium tags-filter`
+2. Merges both extracts with `osmium merge`
+3. Runs `build-geocode-db.py` to parse nodes and build a SQLite FTS5 database
+4. Database schema:
+   - `places` table: `id`, `name`, `name_uk`, `name_en`, `lat`, `lng`, `type`
+   - `places_fts` virtual table: FTS5 index on `name`, `name_uk`, `name_en`
+5. Place types: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `street`
+6. Uploads to R2 at `regions/{id}/geocode/{id}.db`
+
+Step 3 (POI) is placeholder — not yet implemented.
 Step 4 (Valhalla routing) is a v2 feature — commented out.
 
 ## Expected Output Sizes (rough estimates)

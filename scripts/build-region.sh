@@ -2,13 +2,16 @@
 set -euo pipefail
 
 # =============================================================================
-# build-region.sh — Build regional data package (Step 1: Protomaps)
+# build-region.sh — Build regional data package (Steps 1–2)
 #
 # Usage: ./scripts/build-region.sh <region-id>
 # Example: ./scripts/build-region.sh kyiv-oblast
 #
-# Downloads OSM extract from Geofabrik, converts to PMTiles, uploads to R2.
+# Downloads OSM extract from Geofabrik, converts to PMTiles, builds geocode
+# SQLite FTS5 index, and uploads both to R2.
 # =============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 GEOFABRIK_BASE="https://download.geofabrik.de/europe/ukraine"
 
@@ -35,7 +38,7 @@ fi
 # ---------------------------------------------------------------------------
 # Check required tools
 # ---------------------------------------------------------------------------
-for cmd in pmtiles aws curl; do
+for cmd in pmtiles aws curl osmium python3; do
   command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
 done
 
@@ -84,15 +87,33 @@ aws s3 cp "$PMTILES_FILE" \
 log "Step 1: Upload complete"
 
 # ===========================================================================
-# Step 2 — Geocode SQLite Index (TODO — not yet implemented)
+# Step 2 — Geocode SQLite Index
 # ===========================================================================
-# Placeholder for Step 2: geocode SQLite FTS5 index.
-# Requires osmium and geocode tooling decision (see docs/PRD.md Open Questions).
-# When ready, extract named places from OSM and build FTS5 search index:
-#   osmium tags-filter {id}.osm.pbf n/name r/name w/name -o {id}-named.osm.pbf
-#   Build SQLite with schema:
-#     CREATE TABLE places(id TEXT, name TEXT, nameUk TEXT, lat REAL, lng REAL, type TEXT)
-#     CREATE VIRTUAL TABLE places_fts USING fts5(name, nameUk, content='places')
+log "Step 2: Filtering OSM for named places..."
+osmium tags-filter "$OSM_FILE" n/name=* \
+  -o "$TMPDIR/${REGION_ID}-named.osm.pbf"
+
+log "Step 2: Filtering OSM for address tags..."
+osmium tags-filter "$OSM_FILE" n/addr:street=* \
+  -o "$TMPDIR/${REGION_ID}-addr.osm.pbf"
+
+log "Step 2: Merging named + address extracts..."
+osmium merge \
+  "$TMPDIR/${REGION_ID}-named.osm.pbf" \
+  "$TMPDIR/${REGION_ID}-addr.osm.pbf" \
+  -o "$TMPDIR/${REGION_ID}-places.osm.pbf"
+
+log "Step 2: Building SQLite FTS5 geocode database..."
+python3 "$SCRIPT_DIR/build-geocode-db.py" \
+  "$TMPDIR/${REGION_ID}-places.osm.pbf" \
+  "$TMPDIR/${REGION_ID}.db"
+log "Step 2: Geocode DB complete — $(du -h "$TMPDIR/${REGION_ID}.db" | cut -f1)"
+
+log "Step 2: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/geocode/${REGION_ID}.db"
+aws s3 cp "$TMPDIR/${REGION_ID}.db" \
+  "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/geocode/${REGION_ID}.db" \
+  --endpoint-url "$R2_ENDPOINT_URL"
+log "Step 2: Upload complete"
 
 # ===========================================================================
 # Step 3 — POI Extraction (TODO — not yet implemented)
@@ -113,4 +134,4 @@ log "Step 1: Upload complete"
 # 4. Upload to: regions/{id}/routing/{id}.valhalla
 # 5. Add routing: Asset entry to index.json for this region
 
-log "Done — $REGION_ID Step 1 (pmtiles) complete"
+log "Done — $REGION_ID Steps 1–2 (pmtiles + geocode) complete"
