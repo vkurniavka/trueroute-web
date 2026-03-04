@@ -116,13 +116,37 @@ aws s3 cp "$TMPDIR/${REGION_ID}.db" \
 log "Step 2: Upload complete"
 
 # ===========================================================================
-# Step 3 — POI Extraction (TODO — not yet implemented)
+# Step 3 — POI Extraction (Speed Cameras + Speed Limits → GeoJSON)
 # ===========================================================================
-# Placeholder for Step 3: speed cameras + speed limits GeoJSON extraction.
-# Requires osmium. When ready:
-#   osmium tags-filter {id}.osm.pbf n/highway=speed_camera n/enforcement=maxspeed w/maxspeed -o {id}-poi.osm.pbf
-#   Convert to GeoJSON FeatureCollection: {id}-cameras.json
-#   Validate: jq '.features | length' {id}-cameras.json
+# This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
+
+log "Step 3: Filtering OSM for speed cameras..."
+osmium tags-filter "$OSM_FILE" \
+  n/highway=speed_camera \
+  n/enforcement=maxspeed \
+  -o "$TMPDIR/${REGION_ID}-cameras.osm.pbf"
+
+log "Step 3: Filtering OSM for speed limits..."
+osmium tags-filter "$OSM_FILE" \
+  w/maxspeed=* \
+  -o "$TMPDIR/${REGION_ID}-limits.osm.pbf"
+
+log "Step 3: Converting to GeoJSON..."
+python3 "$SCRIPT_DIR/build-poi-json.py" \
+  "$TMPDIR/${REGION_ID}-cameras.osm.pbf" \
+  "$TMPDIR/${REGION_ID}-limits.osm.pbf" \
+  "$TMPDIR/${REGION_ID}-cameras.json"
+
+log "Step 3: Validating JSON output..."
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$TMPDIR/${REGION_ID}-cameras.json" \
+  || die "Step 3: Invalid JSON output"
+log "Step 3: GeoJSON valid — $(du -h "$TMPDIR/${REGION_ID}-cameras.json" | cut -f1)"
+
+log "Step 3: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-cameras.json"
+aws s3 cp "$TMPDIR/${REGION_ID}-cameras.json" \
+  "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-cameras.json" \
+  --endpoint-url "$R2_ENDPOINT_URL"
+log "Step 3: Upload complete"
 
 # ===========================================================================
 # STEP 4 — VALHALLA ROUTING (V2 — DO NOT UNCOMMENT)
