@@ -52,7 +52,7 @@ jobs:
           projectName: trueroute-web
           directory: .vercel/output/static
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          production: true
+          branch: main
 
       - name: R2 checksum validation
         run: 'echo "TODO: checksum validation (see issue #14)"'
