@@ -43,13 +43,16 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Build for Cloudflare Pages
+        run: pnpm exec next-on-pages
+
       - name: Deploy to Cloudflare Pages (production)
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: trueroute-web
-          directory: .next
+          directory: .vercel/output/static
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           production: true
 

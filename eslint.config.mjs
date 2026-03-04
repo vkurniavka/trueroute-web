@@ -1,5 +1,8 @@
-import coreWebVitals from 'eslint-config-next/core-web-vitals'
-import typescript from 'eslint-config-next/typescript'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
+const coreWebVitals = require('eslint-config-next/core-web-vitals')
+const typescript = require('eslint-config-next/typescript')
 
 const config = [
   ...coreWebVitals,

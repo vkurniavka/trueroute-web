@@ -16,25 +16,54 @@ export class R2Error extends Error {
   }
 }
 
-const accountId = process.env.R2_ACCOUNT_ID
-const accessKeyId = process.env.R2_ACCESS_KEY_ID
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
-const bucketName = process.env.R2_BUCKET_NAME
+let _client: S3Client | undefined
 
-const client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: accessKeyId ?? '',
-    secretAccessKey: secretAccessKey ?? '',
-  },
-})
+function getClient(): S3Client {
+  if (_client) return _client
+
+  const accountId = process.env.R2_ACCOUNT_ID
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
+  const bucketName = process.env.R2_BUCKET_NAME
+
+  if (!accountId) {
+    throw new Error('R2 configuration missing: R2_ACCOUNT_ID not set')
+  }
+  if (!accessKeyId) {
+    throw new Error('R2 configuration missing: R2_ACCESS_KEY_ID not set')
+  }
+  if (!secretAccessKey) {
+    throw new Error('R2 configuration missing: R2_SECRET_ACCESS_KEY not set')
+  }
+  if (!bucketName) {
+    throw new Error('R2 configuration missing: R2_BUCKET_NAME not set')
+  }
+
+  _client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  })
+
+  return _client
+}
+
+function getBucketName(): string {
+  const bucketName = process.env.R2_BUCKET_NAME
+  if (!bucketName) {
+    throw new Error('R2 configuration missing: R2_BUCKET_NAME not set')
+  }
+  return bucketName
+}
 
 export async function getR2Object<T>(key: string): Promise<T> {
   let body: string
   try {
-    const response = await client.send(
-      new GetObjectCommand({ Bucket: bucketName, Key: key }),
+    const response = await getClient().send(
+      new GetObjectCommand({ Bucket: getBucketName(), Key: key }),
     )
     body = (await response.Body?.transformToString()) ?? ''
   } catch (error: unknown) {
@@ -57,8 +86,8 @@ export async function getR2Object<T>(key: string): Promise<T> {
 
 export async function listR2Objects(prefix: string): Promise<string[]> {
   try {
-    const response = await client.send(
-      new ListObjectsV2Command({ Bucket: bucketName, Prefix: prefix }),
+    const response = await getClient().send(
+      new ListObjectsV2Command({ Bucket: getBucketName(), Prefix: prefix }),
     )
     return (response.Contents ?? [])
       .map((item) => item.Key)
@@ -76,8 +105,8 @@ export async function getR2Metadata(
   key: string,
 ): Promise<Record<string, string>> {
   try {
-    const response = await client.send(
-      new HeadObjectCommand({ Bucket: bucketName, Key: key }),
+    const response = await getClient().send(
+      new HeadObjectCommand({ Bucket: getBucketName(), Key: key }),
     )
     return response.Metadata ?? {}
   } catch (error: unknown) {
@@ -93,10 +122,12 @@ export async function getR2Metadata(
 }
 
 function isNoSuchKeyError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'name' in error &&
-    (error as { name: string }).name === 'NoSuchKey'
-  )
+  if (typeof error !== 'object' || error === null) return false
+  if ('name' in error && (error as { name: string }).name === 'NoSuchKey') {
+    return true
+  }
+  if ('Code' in error && (error as { Code: string }).Code === 'NoSuchKey') {
+    return true
+  }
+  return false
 }

@@ -30,6 +30,10 @@ function mockBody(content: string) {
 describe('r2 client', () => {
   beforeEach(() => {
     sendMock.mockReset()
+    vi.stubEnv('R2_ACCOUNT_ID', 'test-account')
+    vi.stubEnv('R2_ACCESS_KEY_ID', 'test-key')
+    vi.stubEnv('R2_SECRET_ACCESS_KEY', 'test-secret')
+    vi.stubEnv('R2_BUCKET_NAME', 'test-bucket')
   })
 
   describe('getR2Object', () => {
