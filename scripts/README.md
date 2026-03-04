@@ -57,7 +57,23 @@ Set these in `.env.local` or export them before running:
 5. Place types: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `street`
 6. Uploads to R2 at `regions/{id}/geocode/{id}.db`
 
+<<<<<<< HEAD
 Step 3 (POI) is placeholder — not yet implemented.
+=======
+### Step 3 — POI Extraction (Speed Cameras + Speed Limits)
+
+> **Note:** This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
+
+1. Filters OSM data for speed cameras (`n/highway=speed_camera`, `n/enforcement=maxspeed`) using `osmium tags-filter`
+2. Filters OSM data for speed limit ways (`w/maxspeed=*`) using `osmium tags-filter`
+3. Runs `build-poi-json.py` to convert both extracts to a single GeoJSON FeatureCollection
+4. Speed camera features: Point geometry at node location with `maxspeed` (km/h or null) and `direction` (degrees or null)
+5. Speed limit features: Point geometry at midpoint of first way segment with `maxspeed` (normalized to km/h) and `highway` type
+6. Maxspeed normalization: plain numbers treated as km/h, `"XX mph"` converted to km/h, country defaults (e.g. `"RU:urban"`) become null
+7. Validates output is valid JSON
+8. Uploads to R2 at `regions/{id}/poi/{id}-cameras.json`
+
+>>>>>>> 3c00656 (feat: extend build-region.sh with POI GeoJSON Step 3 (issue #9))
 Step 4 (Valhalla routing) is a v2 feature — commented out.
 
 ## Expected Output Sizes (rough estimates)
@@ -74,3 +90,24 @@ Total for all 25 regions: roughly 1–3 GB of PMTiles.
 ## Region IDs
 
 See `regions.txt` for the canonical list of all 25 Ukrainian oblast IDs.
+
+
+### Step 3 — POI Extraction (Speed Cameras + Speed Limits)
+
+> **Note:** This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
+
+1. Filters OSM data for speed cameras (`n/highway=speed_camera`, `n/enforcement=maxspeed`) using `osmium tags-filter`
+2. Filters OSM data for speed limit ways (`w/maxspeed=*`) using `osmium tags-filter`
+3. Runs `build-poi-json.py` to convert both extracts to a single GeoJSON FeatureCollection
+4. Speed camera features: Point geometry at node location with `maxspeed` (km/h or null) and `direction` (degrees or null)
+5. Speed limit features: Point geometry at midpoint of first way segment with `maxspeed` (normalized to km/h) and `highway` type
+6. Maxspeed normalization: plain numbers treated as km/h, `"XX mph"` converted to km/h, country defaults (e.g. `"RU:urban"`) become null
+7. Validates output is valid JSON
+8. Uploads to R2 at `regions/{id}/poi/{id}-cameras.json`
+
+Step 4 (Valhalla routing) is a v2 feature — commented out.
+
+## Expected Output Sizes (rough estimates)
+
+| Region | `.osm.pbf` | `.pmtiles` |
+|
