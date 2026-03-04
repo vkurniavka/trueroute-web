@@ -14,19 +14,13 @@ Stack: Next.js 15 · TypeScript strict · Tailwind CSS 4 · MDX · next-intl · 
 
 ---
 
-## Workflow — What Happens Before You Write Code
+## Skill Selection — Read Before Writing Any Code
 
-Before touching any file, always:
+Every issue has a `type:` label. Read the matching skill file before touching any file.
 
-1. Read the linked GitHub issue completely
-2. Identify the issue type from its labels: `type: ui` / `type: api` / `type: content` / `type: data` / `type: infra`
-3. Read the matching skill file listed in the table below
-4. Read `docs/PRD.md` section referenced in the issue's Context block
-5. Check the issue's "Depends on" list — confirm those issues are merged before starting
-
-| Issue label | Skill to load before starting |
-|-------------|-------------------------------|
-| `type: ui` | `docs/skills/ui-skill/SKILL.md` — also loaded automatically via `ui-ux-pro-max` |
+| Issue label | Skill file to read |
+|-------------|-------------------|
+| `type: ui` | `docs/skills/ui-skill/SKILL.md` |
 | `type: api` | `docs/skills/api-skill/SKILL.md` |
 | `type: content` | `docs/skills/content-skill/SKILL.md` |
 | `type: data` | `docs/skills/data-skill/SKILL.md` |
@@ -115,6 +109,109 @@ Violations of these rules will cause the PR to be rejected automatically.
 | `wrangler.toml` | Cloudflare config — never modify the `[vars]` or `[[r2_buckets]]` sections |
 | `docs/PRD.md` | Product requirements — check before implementing any feature |
 | `docs/adr/` | Architecture decisions — check before changing any stack choice |
+
+---
+
+## Autonomous Development Loop
+
+When asked to implement one or more issues, execute this full sequence for each issue
+without stopping to ask for confirmation. Only pause if you hit a hard blocker
+(failing dependency, test that cannot pass, ambiguous acceptance criterion).
+
+```
+FOR EACH issue number given:
+
+  STEP 1 — READ
+    gh issue view {N}
+    Read the full body: Context, Files to Create, Acceptance Criteria,
+    Implementation Notes, Out of Scope, Depends on.
+
+  STEP 2 — CHECK DEPENDENCIES
+    For each issue in "Depends on": confirm it is closed/merged.
+    If a dependency is still open → skip this issue, report why, move to next.
+
+  STEP 3 — MOVE TO IN PROGRESS
+    gh issue edit {N} \
+      --remove-label "status: ready" \
+      --add-label "status: in progress"
+
+  STEP 4 — READ SKILL FILE
+    Check the issue's type label and read the matching skill file from the
+    Skill Selection table above. Do this before writing a single line of code.
+
+  STEP 5 — IMPLEMENT
+    Create a feature branch: git checkout -b {type}/issue-{N}-{short-slug}
+    Write the code. Follow all Hard Rules and Always Do These sections.
+    Run checks — all must pass before continuing:
+      pnpm typecheck
+      pnpm lint
+      pnpm test
+
+  STEP 6 — COMMIT
+    Use Conventional Commits format:
+      feat(scope): short description     ← new feature
+      fix(scope): short description      ← bug fix
+      chore(scope): short description    ← infra / tooling
+      docs(scope): short description     ← MDX content pages
+    Never commit directly to main.
+
+  STEP 7 — OPEN PR
+    gh pr create \
+      --title "{type}({scope}): {description}" \
+      --body "Closes #{N}
+
+## Summary
+{what was implemented}
+
+## PR Checklist
+- [x] Issue number linked: closes #{N}
+- [x] pnpm typecheck passes
+- [x] pnpm lint passes
+- [x] pnpm test passes
+- [x] All acceptance criteria met
+{remaining checklist items from PR Checklist section below}" \
+      --label "type: {type}" \
+      --label "status: in review"
+
+  STEP 8 — MOVE ISSUE TO IN REVIEW
+    gh issue edit {N} \
+      --remove-label "status: in progress" \
+      --add-label "status: in review"
+
+  STEP 9 — REVIEW THE PR
+    Read the correct review skill file for this issue's type:
+      type: ui      → docs/skills/review-skill/review-ui.md
+      type: api     → docs/skills/review-skill/review-api.md
+      type: content → docs/skills/review-skill/review-content.md
+      type: data    → docs/skills/review-skill/review-data.md
+      type: infra   → check Hard Rules in this file only
+    Work through every checklist item in the review skill.
+    Post the structured review as a PR comment:
+      gh pr comment {PR} --body "{review output}"
+
+  STEP 10 — FIX REVIEW ISSUES (if any)
+    If the review verdict is "Changes requested":
+      Fix every Required Changes item.
+      Push to the same branch.
+      Re-run pnpm typecheck && pnpm lint && pnpm test.
+      Post an updated review comment confirming fixes.
+
+  STEP 11 — MERGE
+    gh pr merge {PR} --squash --delete-branch
+
+  STEP 12 — MOVE ISSUE TO DONE
+    gh issue edit {N} \
+      --remove-label "status: in review" \
+      --add-label "status: done"
+
+CONTINUE to next issue in the list.
+```
+
+**If something is genuinely ambiguous:** make the most reasonable decision, implement it,
+and note the decision and reasoning in the PR body. Do not stop to ask.
+
+**If a test cannot pass after two fix attempts:** leave it failing, open the PR anyway,
+and add a comment explaining exactly what is failing and why. Do not loop indefinitely.
 
 ---
 
