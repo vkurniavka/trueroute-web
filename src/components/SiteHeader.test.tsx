@@ -16,6 +16,13 @@ vi.mock('next-intl', () => ({
   },
 }))
 
+vi.mock('next/image', () => ({
+  default: (props: Record<string, unknown>) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img {...props} />
+  ),
+}))
+
 vi.mock('next/link', () => ({
   default: ({
     children,
