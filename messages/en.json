@@ -42,5 +42,16 @@
     "gpxImportDesc": "Load any GPX track to follow your planned route offline.",
     "diagnosticsTitle": "Real-time Diagnostics",
     "diagnosticsDesc": "Live OBD2 data: speed, RPM, and engine codes."
+  },
+  "requirements": {
+    "title": "What you need",
+    "needsTitle": "Required",
+    "notNeededTitle": "Not required",
+    "android": "Android 8.0+ phone with gyroscope",
+    "adapter": "ELM327 Bluetooth OBD2 adapter (~$10, Bluetooth Classic / SPP)",
+    "vehicle": "OBD2-equipped vehicle (petrol 2001+, most diesel 2004+)",
+    "noInternet": "Internet connection during navigation",
+    "noSubscription": "Subscription or account",
+    "noHardware": "Any special hardware beyond the adapter"
   }
 }
