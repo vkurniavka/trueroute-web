@@ -1,0 +1,267 @@
+{
+  "_comment": "SAMPLE ONLY - not for production use",
+  "version": 1,
+  "generatedAt": "2026-03-04T00:00:00Z",
+  "regions": [
+    {
+      "id": "cherkasy",
+      "name": "Cherkasy",
+      "nameUk": "Черкаська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/cherkasy/maps/cherkasy.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/cherkasy/geocode/cherkasy.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/cherkasy/poi/cherkasy-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "chernihiv",
+      "name": "Chernihiv",
+      "nameUk": "Чернігівська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/chernihiv/maps/chernihiv.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/chernihiv/geocode/chernihiv.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/chernihiv/poi/chernihiv-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "chernivtsi",
+      "name": "Chernivtsi",
+      "nameUk": "Чернівецька",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/chernivtsi/maps/chernivtsi.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/chernivtsi/geocode/chernivtsi.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/chernivtsi/poi/chernivtsi-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "crimea",
+      "name": "Crimea",
+      "nameUk": "Автономна Республіка Крим",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/crimea/maps/crimea.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/crimea/geocode/crimea.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/crimea/poi/crimea-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "dnipropetrovsk",
+      "name": "Dnipropetrovsk",
+      "nameUk": "Дніпропетровська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/dnipropetrovsk/maps/dnipropetrovsk.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/dnipropetrovsk/geocode/dnipropetrovsk.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/dnipropetrovsk/poi/dnipropetrovsk-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "donetsk",
+      "name": "Donetsk",
+      "nameUk": "Донецька",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/donetsk/maps/donetsk.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/donetsk/geocode/donetsk.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/donetsk/poi/donetsk-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "ivano-frankivsk",
+      "name": "Ivano-Frankivsk",
+      "nameUk": "Івано-Франківська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/ivano-frankivsk/maps/ivano-frankivsk.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/ivano-frankivsk/geocode/ivano-frankivsk.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/ivano-frankivsk/poi/ivano-frankivsk-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "kharkiv",
+      "name": "Kharkiv",
+      "nameUk": "Харківська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/kharkiv/maps/kharkiv.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/kharkiv/geocode/kharkiv.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/kharkiv/poi/kharkiv-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "kherson",
+      "name": "Kherson",
+      "nameUk": "Херсонська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/kherson/maps/kherson.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/kherson/geocode/kherson.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/kherson/poi/kherson-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "khmelnytskyi",
+      "name": "Khmelnytskyi",
+      "nameUk": "Хмельницька",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/khmelnytskyi/maps/khmelnytskyi.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/khmelnytskyi/geocode/khmelnytskyi.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/khmelnytskyi/poi/khmelnytskyi-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "kirovohrad",
+      "name": "Kirovohrad",
+      "nameUk": "Кіровоградська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/kirovohrad/maps/kirovohrad.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/kirovohrad/geocode/kirovohrad.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/kirovohrad/poi/kirovohrad-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "kyiv-oblast",
+      "name": "Kyiv Oblast",
+      "nameUk": "Київська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/kyiv-oblast/maps/kyiv-oblast.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/kyiv-oblast/geocode/kyiv-oblast.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/kyiv-oblast/poi/kyiv-oblast-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "kyiv-city",
+      "name": "Kyiv City",
+      "nameUk": "Київ",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/kyiv-city/maps/kyiv-city.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/kyiv-city/geocode/kyiv-city.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/kyiv-city/poi/kyiv-city-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "luhansk",
+      "name": "Luhansk",
+      "nameUk": "Луганська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/luhansk/maps/luhansk.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/luhansk/geocode/luhansk.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/luhansk/poi/luhansk-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "lviv",
+      "name": "Lviv",
+      "nameUk": "Львівська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/lviv/maps/lviv.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/lviv/geocode/lviv.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/lviv/poi/lviv-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "mykolaiv",
+      "name": "Mykolaiv",
+      "nameUk": "Миколаївська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/mykolaiv/maps/mykolaiv.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/mykolaiv/geocode/mykolaiv.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/mykolaiv/poi/mykolaiv-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "odesa",
+      "name": "Odesa",
+      "nameUk": "Одеська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/odesa/maps/odesa.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/odesa/geocode/odesa.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/odesa/poi/odesa-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "poltava",
+      "name": "Poltava",
+      "nameUk": "Полтавська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/poltava/maps/poltava.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/poltava/geocode/poltava.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/poltava/poi/poltava-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "rivne",
+      "name": "Rivne",
+      "nameUk": "Рівненська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/rivne/maps/rivne.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/rivne/geocode/rivne.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/rivne/poi/rivne-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "sumy",
+      "name": "Sumy",
+      "nameUk": "Сумська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/sumy/maps/sumy.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/sumy/geocode/sumy.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/sumy/poi/sumy-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "ternopil",
+      "name": "Ternopil",
+      "nameUk": "Тернопільська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/ternopil/maps/ternopil.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/ternopil/geocode/ternopil.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/ternopil/poi/ternopil-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "vinnytsia",
+      "name": "Vinnytsia",
+      "nameUk": "Вінницька",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/vinnytsia/maps/vinnytsia.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/vinnytsia/geocode/vinnytsia.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/vinnytsia/poi/vinnytsia-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "volyn",
+      "name": "Volyn",
+      "nameUk": "Волинська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/volyn/maps/volyn.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/volyn/geocode/volyn.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/volyn/poi/volyn-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "zakarpattia",
+      "name": "Zakarpattia",
+      "nameUk": "Закарпатська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/zakarpattia/maps/zakarpattia.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/zakarpattia/geocode/zakarpattia.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/zakarpattia/poi/zakarpattia-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "zaporizhzhia",
+      "name": "Zaporizhzhia",
+      "nameUk": "Запорізька",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/zaporizhzhia/maps/zaporizhzhia.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/zaporizhzhia/geocode/zaporizhzhia.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/zaporizhzhia/poi/zaporizhzhia-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    },
+    {
+      "id": "zhytomyr",
+      "name": "Zhytomyr",
+      "nameUk": "Житомирська",
+      "assets": {
+        "maps": { "url": "https://data.trueroute.app/regions/zhytomyr/maps/zhytomyr.pmtiles", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "geocode": { "url": "https://data.trueroute.app/regions/zhytomyr/geocode/zhytomyr.db", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" },
+        "poi": { "url": "https://data.trueroute.app/regions/zhytomyr/poi/zhytomyr-cameras.json", "sizeBytes": 0, "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "generatedAt": "2026-03-04T00:00:00Z" }
+      }
+    }
+  ]
+}
