@@ -13,5 +13,12 @@
     "github": "GitHub",
     "copyright": "\u00a9 {year} TrueRoute",
     "version": "v{version}"
+  },
+  "hero": {
+    "headline": "Navigate safely when GPS is disrupted",
+    "subheadline": "TrueRoute fuses OBD2 speed, gyroscope, and GPS into one accurate position — and keeps going when GPS fails.",
+    "ctaDownload": "Download for Android",
+    "ctaComingSoon": "Coming Soon",
+    "ctaHowItWorks": "How it works"
   }
 }
