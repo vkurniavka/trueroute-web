@@ -8,4 +8,9 @@ declare module '*.mdx' {
     title: string
     description: string
   }
+
+  export const faqItems: {
+    question: string
+    answer: string
+  }[]
 }

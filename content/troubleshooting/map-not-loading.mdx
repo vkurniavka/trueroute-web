@@ -3,6 +3,21 @@ export const metadata = {
   description: 'Fix map display issues in TrueRoute — incomplete downloads, wrong region, storage problems, and how to re-download maps.',
 }
 
+export const faqItems = [
+  {
+    question: 'Why is the TrueRoute map blank or not loading?',
+    answer: 'The most common cause is a missing or incomplete region download. Open the Maps screen and check that your current oblast is listed as Downloaded. If the download was interrupted, delete the region and re-download it.',
+  },
+  {
+    question: 'I downloaded Kyiv Oblast but the map still does not show. Why?',
+    answer: 'Kyiv Oblast and Kyiv City may be listed as separate regions. Check which area you are in and ensure you have downloaded the correct region from the Maps screen.',
+  },
+  {
+    question: 'How do I re-download a corrupted map region?',
+    answer: 'Open the Maps screen, tap the affected region, tap Delete to remove the existing data, then tap Download to download it again. Ensure you have at least 500 MB of free storage and a stable internet connection.',
+  },
+]
+
 # Map Not Loading
 
 If the TrueRoute map shows a blank area or missing tiles, the most likely cause is a missing or incomplete region download. Work through the steps below to resolve the issue.

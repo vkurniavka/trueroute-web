@@ -3,6 +3,7 @@ import path from 'path'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { DocLayout } from '@/components/DocLayout'
+import { FaqStructuredData } from '@/components/FaqStructuredData'
 
 const contentDir = path.join(process.cwd(), 'content', 'troubleshooting')
 
@@ -44,9 +45,14 @@ export default async function TroubleshootingPage({ params }: PageProps) {
   const Content = mod.default
   const title = mod.metadata?.title ?? slug
 
+  const faqItems = mod.faqItems ?? []
+
   return (
-    <DocLayout section="troubleshooting" title={title}>
-      <Content />
-    </DocLayout>
+    <>
+      {faqItems.length > 0 && <FaqStructuredData items={faqItems} />}
+      <DocLayout section="troubleshooting" title={title}>
+        <Content />
+      </DocLayout>
+    </>
   )
 }
