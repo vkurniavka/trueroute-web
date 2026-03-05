@@ -6,21 +6,21 @@ export async function SiteFooter() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-zinc-800 bg-zinc-950">
+    <footer className="border-t border-border bg-surface-dark">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 text-sm sm:flex-row sm:justify-between">
           <a
             href="https://github.com/vkurniavka/trueroute-web"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-400 transition-colors hover:text-zinc-50"
+            className="text-text-secondary transition-colors hover:text-text-primary"
           >
             {t('github')}
           </a>
-          <p className="text-zinc-400">
+          <p className="text-text-muted">
             {t('copyright', { year })}
           </p>
-          <p className="text-zinc-500">
+          <p className="text-text-muted">
             {t('version', { version: env.appVersion })}
           </p>
         </div>
