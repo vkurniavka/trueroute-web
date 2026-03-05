@@ -53,5 +53,12 @@
     "noInternet": "Internet connection during navigation",
     "noSubscription": "Subscription or account",
     "noHardware": "Any special hardware beyond the adapter"
+  },
+  "downloadCta": {
+    "title": "Ready to drive with confidence?",
+    "button": "Download on Google Play",
+    "comingSoon": "Coming Soon",
+    "androidVersion": "Requires Android 8.0+",
+    "qrPlaceholder": "QR code coming soon"
   }
 }
