@@ -29,5 +29,18 @@
     "step2Body": "OBD2 speed + gyroscope + GPS are combined into one continuous, accurate position.",
     "step3Title": "GPS fails — navigation continues",
     "step3Body": "When GPS is jammed or spoofed, dead reckoning keeps your position accurate automatically."
+  },
+  "features": {
+    "title": "What TrueRoute does",
+    "gpsDetectionTitle": "GPS Disruption Detection",
+    "gpsDetectionDesc": "Identifies GPS spoofing and jamming in real time.",
+    "deadReckoningTitle": "Dead Reckoning",
+    "deadReckoningDesc": "Continues navigation from OBD2 speed and phone sensors when GPS is lost.",
+    "offlineMapsTitle": "Offline Maps",
+    "offlineMapsDesc": "Download regional maps once, navigate without internet.",
+    "gpxImportTitle": "GPX Route Import",
+    "gpxImportDesc": "Load any GPX track to follow your planned route offline.",
+    "diagnosticsTitle": "Real-time Diagnostics",
+    "diagnosticsDesc": "Live OBD2 data: speed, RPM, and engine codes."
   }
 }
