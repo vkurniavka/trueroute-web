@@ -1,0 +1,80 @@
+export const metadata = {
+  title: 'OBD2 Adapter Not Connecting',
+  description: 'Fix common OBD2 connection issues in TrueRoute — wrong adapter type, Bluetooth pairing, power cycling, and clone adapter problems.',
+}
+
+# OBD2 Adapter Not Connecting
+
+If TrueRoute cannot find or connect to your OBD2 adapter, work through this checklist to identify the cause.
+
+## Quick checklist
+
+Before troubleshooting further, confirm all of these:
+
+- The adapter is plugged firmly into the vehicle's OBD2 port (J1962 connector, under the dashboard on the driver's side).
+- The vehicle ignition is turned ON (engine running or accessory mode).
+- Bluetooth is enabled on your phone.
+- Location permission is granted to TrueRoute. Android requires Location permission for Bluetooth Classic device discovery — without it, the app cannot scan for adapters.
+
+## Cause 1: Wrong adapter type (WiFi instead of Bluetooth)
+
+This is the most common issue. TrueRoute only supports **Bluetooth Classic (SPP profile)** ELM327 adapters. WiFi ELM327 adapters do not work, even though they look identical.
+
+**How to check:** Look at the adapter listing where you purchased it. If it says "WiFi" or "WLAN", it is not compatible. A compatible adapter will say "Bluetooth" or "Bluetooth Classic".
+
+**Fix:** Purchase a Bluetooth Classic ELM327 OBD2 adapter. They are widely available for approximately $10.
+
+## Cause 2: Bluetooth Low Energy (BLE) adapter instead of Classic
+
+Some newer ELM327 adapters use Bluetooth Low Energy (BLE) instead of Bluetooth Classic. TrueRoute requires the SPP (Serial Port Profile) protocol, which is only available on Bluetooth Classic adapters.
+
+**How to check:** In your phone's Android Bluetooth settings, pair the adapter. If it appears under "Low Energy" or "BLE" devices, it is not compatible.
+
+**Fix:** Purchase a Bluetooth Classic (SPP) ELM327 adapter.
+
+## Cause 3: Adapter not paired in Android settings
+
+Some adapters require manual pairing in Android Bluetooth settings before TrueRoute can discover them.
+
+1. Open your phone's **Settings** → **Bluetooth**.
+
+2. Tap **Pair new device** and wait for the ELM327 adapter to appear.
+
+3. Select the adapter. Enter the PIN when prompted — the default PIN is `1234` or `0000`.
+
+4. Return to TrueRoute and tap **Scan for Adapters** again.
+
+## Cause 4: Adapter needs a power cycle
+
+If the adapter was previously connected and stopped responding, it may need a restart.
+
+1. Unplug the adapter from the OBD2 port.
+
+2. Wait 10 seconds.
+
+3. Plug the adapter back in firmly.
+
+4. Open TrueRoute and tap **Scan for Adapters**.
+
+## Cause 5: Clone adapter with firmware issues
+
+Some low-cost ELM327 clones have incomplete firmware. Symptoms include: the adapter pairs and connects, but TrueRoute shows no speed or RPM data.
+
+**How to identify:** The adapter connects successfully (indicator turns green) but all OBD2 values show `--` in the diagnostics screen.
+
+**Fix:** Try a different ELM327 adapter from a reputable seller. Adapters labeled "ELM327 v1.5" or "v2.1" with Bluetooth Classic and PIC18F25K80 chip are most reliable.
+
+## Verify Bluetooth Classic support in Android settings
+
+1. Open **Settings** → **Bluetooth** on your Android device.
+
+2. Find your ELM327 adapter in the paired devices list.
+
+3. Tap the settings icon next to the adapter name.
+
+4. Look for the device type. Bluetooth Classic devices show "Phone audio", "Input device", or no category. BLE-only devices show "Low Energy" or "LE Audio".
+
+## Related
+
+- [How to Connect an OBD2 Adapter](/how-to/connect-obd2)
+- [Reading the Diagnostics Screen](/how-to/diagnostics)
