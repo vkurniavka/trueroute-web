@@ -1,0 +1,59 @@
+export const metadata = {
+  title: 'Position Is Wrong or Drifting',
+  description: 'Diagnose and understand position drift in TrueRoute Dead Reckoning mode — OBD2 connection, drift rates, and how position resets.',
+}
+
+# Position Is Wrong or Drifting
+
+If your position on the map does not match your actual location, the most likely cause is accumulated drift during Dead Reckoning mode. Work through the diagnostics below to understand and resolve the issue.
+
+## Check 1: Is your OBD2 adapter connected?
+
+OBD2 speed data is the most important input for accurate Dead Reckoning. Without it, the app relies only on phone accelerometer and gyroscope, which drift significantly faster.
+
+1. Open TrueRoute and check the status bar. A green indicator with a speed reading confirms the OBD2 adapter is connected.
+
+2. If the indicator shows no connection, see [How to Connect an OBD2 Adapter](/how-to/connect-obd2).
+
+**Drift rates:**
+- **With OBD2 connected:** Less than 5% drift per 10 km. This means after 10 km of Dead Reckoning, your position is within approximately 500 meters of reality.
+- **Without OBD2:** Less than 20% drift per 10 km. The app uses accelerometer-based speed estimation, which is less accurate than the vehicle's speed sensor.
+
+## Check 2: How long has Dead Reckoning been active?
+
+Dead Reckoning drift accumulates over distance. The longer you drive without trusted GPS, the larger the position error becomes.
+
+1. Open the **Diagnostics** screen from the main menu.
+
+2. Check the current positioning mode. If the mode shows **Dead Reckoning** with an orange marker, drift is expected.
+
+3. Check the **accuracy radius circle** on the map. This circle appears after 5 minutes in Dead Reckoning mode and grows over time to indicate the uncertainty range.
+
+## Check 3: Is GPS actually disrupted?
+
+Your position error may be caused by GPS disruption (spoofing or jamming) rather than a system problem.
+
+1. Open the **Diagnostics** screen.
+
+2. Check the **spoof confidence score**. A score above 0.8 confirms GPS is disrupted and Dead Reckoning is active for a reason.
+
+3. If the score is below 0.3, the app should be using GPS. If the position is still wrong with GPS active, try moving to an area with clear sky view.
+
+## When does position reset?
+
+The app automatically corrects your position when GPS becomes trustworthy again. This happens when the spoof confidence score drops below **0.3 for 30 continuous seconds**. At that point, the app switches back to GPS or Enhanced mode and the position snaps to the GPS fix.
+
+There is no manual "reset position" action. The position corrects automatically when GPS is re-trusted.
+
+## Reducing drift
+
+- **Connect an OBD2 adapter.** This is the single most effective way to reduce Dead Reckoning drift. OBD2 speed data is far more accurate than accelerometer-based speed estimation.
+- **Drive on straight roads.** Gyroscope heading drift accumulates faster on winding roads with many turns.
+- **Calibrate before entering a disrupted area.** Ensure the app has a good GPS fix and OBD2 connection before driving into an area with known GPS disruption.
+
+## Related
+
+- [Positioning Modes Explained](/how-to/positioning-modes)
+- [Reading the Diagnostics Screen](/how-to/diagnostics)
+- [GPS alert appeared — Troubleshooting](/troubleshooting/gps-alert-appeared)
+- [How to Connect an OBD2 Adapter](/how-to/connect-obd2)
