@@ -72,11 +72,14 @@ log "Sample per asset type: $SAMPLE_PER_TYPE"
 # ---------------------------------------------------------------------------
 log "Downloading metadata/checksums.json from R2..."
 
-aws s3 cp \
+if ! aws s3 cp \
   "s3://${R2_BUCKET_NAME}/metadata/checksums.json" \
   "$CHECKSUMS_LOCAL" \
-  --endpoint-url "$R2_ENDPOINT_URL" \
-  || die "Could not download metadata/checksums.json — has generate-index.sh been run?"
+  --endpoint-url "$R2_ENDPOINT_URL" 2>/dev/null; then
+  log "WARNING: metadata/checksums.json not found in R2 — bucket not yet populated"
+  log "  Run scripts/build-all-regions.sh then scripts/generate-index.sh to populate."
+  exit 0
+fi
 
 log "checksums.json downloaded ($(wc -c < "$CHECKSUMS_LOCAL") bytes)"
 
