@@ -3,6 +3,25 @@ export const metadata = {
   description: 'Understand the GPS disruption alert in TrueRoute — what the yellow warning and red Dead Reckoning banners mean and what to do.',
 }
 
+export const faqItems = [
+  {
+    question: 'What does the yellow GPS warning banner mean in TrueRoute?',
+    answer: 'The yellow warning banner appears when the spoof confidence score exceeds 0.6, meaning TrueRoute detects possible GPS disruption. The app continues using GPS while monitoring the situation. No action is needed — continue driving normally.',
+  },
+  {
+    question: 'What does the red Dead Reckoning banner mean?',
+    answer: 'The red banner appears when the spoof confidence score exceeds 0.8. GPS is now considered untrusted and the app has switched to Dead Reckoning mode, navigating using your OBD2 speed sensor and phone gyroscope instead of GPS. Dead Reckoning maintains accuracy within 5% drift per 10 km with an OBD2 adapter connected.',
+  },
+  {
+    question: 'Can the GPS alert be a false positive?',
+    answer: 'Yes. The GPS alert can trigger in tunnels, underground parking garages, and dense urban canyons where GPS signal is degraded but not spoofed. The alert clears automatically when GPS signal improves and the confidence score drops below 0.3 for 30 continuous seconds.',
+  },
+  {
+    question: 'How do I dismiss the GPS alert and force GPS mode?',
+    answer: 'Open Settings in TrueRoute, tap Positioning Mode, and select Force GPS Mode. Only do this when you are certain your GPS signal is trustworthy — forcing GPS during actual spoofing will result in incorrect positioning.',
+  },
+]
+
 # GPS Alert Appeared
 
 TrueRoute monitors GPS signal quality and warns you when it detects possible disruption. If an alert appeared on your screen, here is what it means and what to do.

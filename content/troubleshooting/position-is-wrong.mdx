@@ -3,6 +3,21 @@ export const metadata = {
   description: 'Diagnose and understand position drift in TrueRoute Dead Reckoning mode — OBD2 connection, drift rates, and how position resets.',
 }
 
+export const faqItems = [
+  {
+    question: 'Why is my position wrong on the TrueRoute map?',
+    answer: 'The most likely cause is accumulated drift during Dead Reckoning mode. When GPS is disrupted, position accuracy decreases over distance. With an OBD2 adapter connected, drift is less than 5% per 10 km. Without OBD2, drift can reach 20% per 10 km.',
+  },
+  {
+    question: 'How do I fix position drift in Dead Reckoning mode?',
+    answer: 'Connect an ELM327 Bluetooth OBD2 adapter — this is the single most effective way to reduce drift. The position corrects automatically when GPS becomes trustworthy again (confidence score drops below 0.3 for 30 continuous seconds).',
+  },
+  {
+    question: 'Does the position reset automatically when GPS returns?',
+    answer: 'Yes. When the spoof confidence score drops below 0.3 for 30 continuous seconds, the app switches back to GPS or Enhanced mode and the position snaps to the GPS fix. There is no manual reset needed.',
+  },
+]
+
 # Position Is Wrong or Drifting
 
 If your position on the map does not match your actual location, the most likely cause is accumulated drift during Dead Reckoning mode. Work through the diagnostics below to understand and resolve the issue.
