@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getR2Object } from '@/lib/r2'
+
+export const runtime = 'edge'
 import { R2Error } from '@/lib/r2'
 import { RegionIndexSchema } from '@/schemas/regions.schema'
 import type { RegionIndex } from '@/schemas/regions.schema'
