@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import Image from 'next/image'
 import Link from 'next/link'
 import { env } from '@/lib/env'
 
@@ -9,6 +10,21 @@ export async function HeroSection() {
   return (
     <section className="bg-surface-dark px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
       <div className="mx-auto max-w-4xl text-center">
+        {/* Shield icon */}
+        <div className="mb-8 flex justify-center">
+          <div className="relative">
+            {/* Glow behind the shield */}
+            <div className="absolute inset-0 scale-75 rounded-full bg-blue-primary opacity-20 blur-2xl" />
+            <Image
+              src="/trueroute-icon.svg"
+              alt="TrueRoute shield"
+              width={120}
+              height={120}
+              priority
+              className="relative drop-shadow-lg"
+            />
+          </div>
+        </div>
         <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
           {t('headline')}
         </h1>
