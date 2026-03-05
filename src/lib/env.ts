@@ -1,5 +1,6 @@
 export const env = {
   playStoreUrl: process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? '',
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION ?? '0.0.0',
   r2EndpointUrl: process.env.R2_ENDPOINT_URL ?? '',
   r2AccessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
   r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',

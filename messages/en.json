@@ -8,5 +8,10 @@
   },
   "header": {
     "logoText": "TrueRoute"
+  },
+  "footer": {
+    "github": "GitHub",
+    "copyright": "\u00a9 {year} TrueRoute",
+    "version": "v{version}"
   }
 }
