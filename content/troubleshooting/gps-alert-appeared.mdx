@@ -1,0 +1,79 @@
+export const metadata = {
+  title: 'GPS Alert Appeared',
+  description: 'Understand the GPS disruption alert in TrueRoute — what the yellow warning and red Dead Reckoning banners mean and what to do.',
+}
+
+# GPS Alert Appeared
+
+TrueRoute monitors GPS signal quality and warns you when it detects possible disruption. If an alert appeared on your screen, here is what it means and what to do.
+
+## Alert types
+
+### Yellow warning banner
+
+A yellow warning banner appears when the spoof confidence score exceeds **0.6**. This means TrueRoute detects possible GPS disruption, but the signal is not yet untrusted. The app continues using GPS for positioning while monitoring the situation.
+
+**What to do:** No action needed. Continue driving. The app is monitoring the situation and will switch to Dead Reckoning automatically if the score rises further.
+
+[screenshot: yellow GPS disruption warning banner on the map screen]
+
+### Red Dead Reckoning banner
+
+A red banner appears when the spoof confidence score exceeds **0.8**. GPS is now considered untrusted. The app has switched to Dead Reckoning mode and is navigating using your vehicle's OBD2 speed sensor and phone gyroscope instead of GPS.
+
+**What to do:** Continue driving. Dead Reckoning maintains your position with less than 5% drift per 10 km when an OBD2 adapter is connected. The app returns to GPS automatically when the signal becomes trustworthy again.
+
+[screenshot: red Dead Reckoning banner with orange position marker on map]
+
+## How the confidence score works
+
+TrueRoute calculates a spoof confidence score between 0.0 (GPS fully trusted) and 1.0 (GPS definitely disrupted). The score combines four detection methods:
+
+- **Position jump detection:** Flags sudden GPS position changes inconsistent with vehicle speed.
+- **Speed mismatch detection:** Compares GPS-derived speed against OBD2 speed.
+- **Heading mismatch detection:** Compares GPS heading against gyroscope heading.
+- **GNSS anomaly detection:** Identifies unusual satellite signal patterns.
+
+The thresholds are:
+- **0.6** — Warning alert appears.
+- **0.8** — Dead Reckoning mode activates.
+- **Below 0.3 for 30 continuous seconds** — App returns to GPS-based positioning.
+
+## Common false positive causes
+
+The GPS alert may appear in situations where GPS signal is degraded but not spoofed:
+
+- **Tunnels and underpasses.** GPS signal is blocked temporarily. The alert may appear briefly and resolve when you exit.
+- **Underground parking garages.** GPS signal is lost entirely. The alert resolves when you drive out.
+- **Dense urban canyons.** Tall buildings cause GPS multipath errors that can trigger the alert.
+- **GPS signal loss at ignition.** If the app starts before a GPS fix is acquired, the initial position may be inaccurate.
+
+In these cases, the score drops below 0.3 and the alert clears automatically once GPS signal improves.
+
+## Check the confidence score in diagnostics
+
+1. Tap the **Diagnostics** icon in the main menu.
+
+2. Find the **Spoof confidence score** value. A score below 0.3 indicates GPS is trusted.
+
+3. Review the per-detector sub-scores to see which detector triggered the alert.
+
+[screenshot: diagnostics screen showing spoof confidence score and sub-scores]
+
+## Force GPS mode (manual override)
+
+If you are confident your GPS is accurate despite the alert (for example, after exiting a tunnel), you can manually override the mode.
+
+1. Open **Settings** in TrueRoute.
+
+2. Tap **Positioning Mode**.
+
+3. Select **Force GPS Mode**. The app will use GPS regardless of the confidence score.
+
+**Warning:** Only force GPS mode when you are certain the signal is trustworthy. Forcing GPS during actual spoofing will result in incorrect positioning.
+
+## Related
+
+- [Positioning Modes Explained](/how-to/positioning-modes)
+- [Reading the Diagnostics Screen](/how-to/diagnostics)
+- [Position is wrong — Troubleshooting](/troubleshooting/position-is-wrong)
