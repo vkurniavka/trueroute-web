@@ -1,1 +1,12 @@
-{}
+{
+  "nav": {
+    "howTo": "How-to",
+    "troubleshooting": "Troubleshooting",
+    "ariaLabel": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "header": {
+    "logoText": "TrueRoute"
+  }
+}
