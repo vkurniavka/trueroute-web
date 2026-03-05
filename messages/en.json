@@ -20,5 +20,14 @@
     "ctaDownload": "Download for Android",
     "ctaComingSoon": "Coming Soon",
     "ctaHowItWorks": "How it works"
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "step1Title": "Connect your OBD2 adapter",
+    "step1Body": "Plug any ELM327 Bluetooth adapter into your car's OBD2 port — no tools needed.",
+    "step2Title": "The app fuses all sensors",
+    "step2Body": "OBD2 speed + gyroscope + GPS are combined into one continuous, accurate position.",
+    "step3Title": "GPS fails — navigation continues",
+    "step3Body": "When GPS is jammed or spoofed, dead reckoning keeps your position accurate automatically."
   }
 }
