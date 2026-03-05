@@ -60,5 +60,9 @@
     "comingSoon": "Coming Soon",
     "androidVersion": "Requires Android 8.0+",
     "qrPlaceholder": "QR code coming soon"
+  },
+  "seo": {
+    "homeTitle": "TrueRoute — GPS Spoofing Protection for Ukrainian Drivers",
+    "homeDesc": "Navigate safely when GPS is disrupted. TrueRoute detects GPS spoofing and switches to dead reckoning using your OBD2 adapter and phone sensors."
   }
 }

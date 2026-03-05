@@ -1,12 +1,17 @@
+import { HeroSection } from "@/components/HeroSection";
+import { HowItWorksSection } from "@/components/HowItWorksSection";
+import { FeaturesSection } from "@/components/FeaturesSection";
+import { RequirementsSection } from "@/components/RequirementsSection";
+import { DownloadCTASection } from "@/components/DownloadCTASection";
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <main className="text-center">
-        <h1 className="text-4xl font-bold">TrueRoute</h1>
-        <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-          Coming soon.
-        </p>
-      </main>
-    </div>
+    <>
+      <HeroSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <RequirementsSection />
+      <DownloadCTASection />
+    </>
   );
 }
