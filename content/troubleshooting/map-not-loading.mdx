@@ -1,0 +1,72 @@
+export const metadata = {
+  title: 'Map Not Loading',
+  description: 'Fix map display issues in TrueRoute — incomplete downloads, wrong region, storage problems, and how to re-download maps.',
+}
+
+# Map Not Loading
+
+If the TrueRoute map shows a blank area or missing tiles, the most likely cause is a missing or incomplete region download. Work through the steps below to resolve the issue.
+
+## Check 1: Was the region fully downloaded?
+
+A download that was interrupted before reaching 100% may leave the map data incomplete.
+
+1. Open the **Maps** screen from the main menu.
+
+2. Find the region you expect to be available. Check its status.
+
+3. If the status shows a percentage less than 100% or does not show **Downloaded**, the download did not complete. Tap the region and tap **Download** to restart.
+
+[screenshot: Maps screen showing download status for regions]
+
+## Check 2: Are you in the correct region?
+
+TrueRoute requires a downloaded map for your current location. If you are driving in a different oblast than the one you downloaded, the map will not display.
+
+1. Check which oblast you are currently in.
+
+2. Open the **Maps** screen and confirm that oblast is listed as **Downloaded**.
+
+3. If not, download the correct region.
+
+> **Common mistake:** Kyiv Oblast and Kyiv City may be listed as separate regions. Ensure you have downloaded the correct one for your location.
+
+## Check 3: Re-download the region
+
+If the region shows as downloaded but the map still does not display, the data may be corrupted from an interrupted download.
+
+1. Open the **Maps** screen.
+
+2. Tap the affected region.
+
+3. Tap **Delete** to remove the existing map data.
+
+4. Tap **Download** to download the region again.
+
+5. Wait for the download to complete fully (progress bar reaches 100%).
+
+[screenshot: region detail with Delete and Download buttons]
+
+## Check 4: Sufficient storage space
+
+Each oblast map requires approximately 200 to 500 MB of storage. If your device storage is nearly full, the download may fail silently or produce corrupted data.
+
+1. Open your phone's **Settings** → **Storage**.
+
+2. Confirm you have at least 500 MB of free space.
+
+3. If storage is low, free up space by removing unused apps or files, then re-download the region.
+
+## Check 5: Clear cache and re-download
+
+If none of the above resolved the issue, clear the app's map cache.
+
+1. Open your phone's **Settings** → **Apps** → **TrueRoute**.
+
+2. Tap **Storage** → **Clear Cache**. This removes cached tiles without deleting your downloaded regions.
+
+3. Reopen TrueRoute. If the map still does not display, delete and re-download the affected region from the **Maps** screen.
+
+## Related
+
+- [How to Download Offline Maps](/how-to/download-maps)
