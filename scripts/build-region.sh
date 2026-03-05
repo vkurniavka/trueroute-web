@@ -158,4 +158,4 @@ log "Step 3: Upload complete"
 # 4. Upload to: regions/{id}/routing/{id}.valhalla
 # 5. Add routing: Asset entry to index.json for this region
 
-log "Done — $REGION_ID Steps 1–2 (pmtiles + geocode) complete"
+log "Done — $REGION_ID Steps 1–3 (pmtiles + geocode + poi) complete"
