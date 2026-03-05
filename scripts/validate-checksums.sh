@@ -40,11 +40,16 @@ for cmd in aws python3 sha256sum; do
 done
 
 # ---------------------------------------------------------------------------
-# Validate required env vars
+# Validate required env vars — skip gracefully when not configured
+# This allows CI to succeed on branches/forks that don't have R2 secrets.
+# The step will still fail on any actual checksum mismatch.
 # ---------------------------------------------------------------------------
-: "${R2_ENDPOINT_URL:?R2_ENDPOINT_URL is not set}"
-: "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID is not set}"
-: "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY is not set}"
+if [[ -z "${R2_ENDPOINT_URL:-}" || -z "${R2_ACCESS_KEY_ID:-}" || -z "${R2_SECRET_ACCESS_KEY:-}" ]]; then
+  log "WARNING: R2 credentials not configured — skipping checksum validation"
+  log "  Set R2_ENDPOINT_URL, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY to enable."
+  exit 0
+fi
+
 : "${R2_BUCKET_NAME:=trueroute-data}"
 : "${SAMPLE_PER_TYPE:=3}"
 
