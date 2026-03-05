@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useCallback, useState } from 'react'
@@ -17,9 +18,10 @@ export function SiteHeader() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface-dark">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-xl font-bold text-zinc-50">
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-text-primary">
+          <Image src="/trueroute-icon.svg" width={32} height={32} alt="" />
           {t('header.logoText')}
         </Link>
 
@@ -29,13 +31,13 @@ export function SiteHeader() {
         >
           <Link
             href="/how-to/connect-obd2"
-            className="text-sm text-zinc-400 transition-colors hover:text-zinc-50"
+            className="text-sm text-text-secondary transition-colors hover:text-text-primary"
           >
             {t('nav.howTo')}
           </Link>
           <Link
             href="/troubleshooting/obd2-not-connecting"
-            className="text-sm text-zinc-400 transition-colors hover:text-zinc-50"
+            className="text-sm text-text-secondary transition-colors hover:text-text-primary"
           >
             {t('nav.troubleshooting')}
           </Link>
@@ -43,7 +45,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="text-zinc-400 transition-colors hover:text-zinc-50 md:hidden"
+          className="text-text-secondary transition-colors hover:text-text-primary md:hidden"
           onClick={toggleMobileMenu}
           aria-expanded={mobileMenuOpen}
           aria-label={
@@ -77,19 +79,19 @@ export function SiteHeader() {
       {mobileMenuOpen && (
         <nav
           aria-label={t('nav.ariaLabel')}
-          className="border-t border-zinc-800 md:hidden"
+          className="border-t border-border bg-surface-card md:hidden"
         >
           <div className="space-y-1 px-4 py-3">
             <Link
               href="/how-to/connect-obd2"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-50"
+              className="block rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-elevated hover:text-text-primary"
               onClick={closeMobileMenu}
             >
               {t('nav.howTo')}
             </Link>
             <Link
               href="/troubleshooting/obd2-not-connecting"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-50"
+              className="block rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-elevated hover:text-text-primary"
               onClick={closeMobileMenu}
             >
               {t('nav.troubleshooting')}
