@@ -76,7 +76,7 @@ jobs:
           # osmium-tool — OSM data filtering (used by build-region.sh for geocode/POI)
           # tilemaker   — OSM PBF → PMTiles conversion (replaces the old pmtiles convert call)
           sudo apt-get install -y osmium-tool tilemaker
-          tilemaker --version
+          tilemaker --help 2>&1 | head -3 || true   # --version exits 255; --help is safer
           # Python osmium binding (used by build-geocode-db.py and build-poi-json.py)
           pip install osmium
 
