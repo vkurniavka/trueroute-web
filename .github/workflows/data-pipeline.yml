@@ -69,23 +69,16 @@ jobs:
       # -----------------------------------------------------------------------
       # 3. Install data-pipeline tools (only needed for BUILD stage)
       # -----------------------------------------------------------------------
-      - name: Install osmium-tool + Python osmium binding
+      - name: Install osmium-tool, tilemaker + Python osmium binding
         if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y osmium-tool
+          # osmium-tool — OSM data filtering (used by build-region.sh for geocode/POI)
+          # tilemaker   — OSM PBF → PMTiles conversion (replaces the old pmtiles convert call)
+          sudo apt-get install -y osmium-tool tilemaker
+          tilemaker --version
           # Python osmium binding (used by build-geocode-db.py and build-poi-json.py)
           pip install osmium
-
-      - name: Install pmtiles CLI
-        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
-        run: |
-          PMTILES_VERSION="1.24.1"
-          curl -fsSL \
-            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
-            | tar -xz pmtiles
-          sudo mv pmtiles /usr/local/bin/pmtiles
-          pmtiles version
 
       # -----------------------------------------------------------------------
       # 4. Validate inputs
