@@ -200,7 +200,11 @@ fi
 # ===========================================================================
 # STAGE 2 — Generate index.json + checksums.json and upload to R2
 # ===========================================================================
-if ! $D1_ONLY && ! $_SKIP_INDEX; then
+if $_SKIP_INDEX; then
+  sep
+  log "STAGE 2 (INDEX): Skipped — single-region build"
+  log "                 Run './scripts/pipeline.sh --skip-build' once all regions are built."
+elif ! $D1_ONLY; then
   sep
   log "STAGE 2: Generating index.json and checksums.json"
   "$SCRIPT_DIR/generate-index.sh"
