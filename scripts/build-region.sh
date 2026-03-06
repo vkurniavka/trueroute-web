@@ -71,7 +71,7 @@ log "Region: $REGION_ID  bbox: $BBOX"
 # ---------------------------------------------------------------------------
 # Check required tools
 # ---------------------------------------------------------------------------
-for cmd in tilemaker pmtiles osmium python3 aws curl; do
+for cmd in tilemaker pmtiles sqlite3 osmium python3 aws curl; do
   command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
 done
 
@@ -134,6 +134,12 @@ tilemaker \
   --process "$SCRIPT_DIR/tilemaker/process.lua" \
   --store "$TMPDIR/tilemaker-store"
 log "Step 1: MBTiles complete — $(du -h "$MBTILES_FILE" | cut -f1)"
+
+# tilemaker 2.4 does not write bounds metadata to MBTiles — pmtiles convert
+# requires it. Inject the bbox from regions-bbox.json into the metadata table.
+log "Step 1: Injecting bounds metadata into MBTiles..."
+sqlite3 "$MBTILES_FILE" \
+  "INSERT OR REPLACE INTO metadata(name,value) VALUES('bounds','$BBOX');"
 
 pmtiles convert "$MBTILES_FILE" "$PMTILES_FILE"
 rm -f "$MBTILES_FILE"
