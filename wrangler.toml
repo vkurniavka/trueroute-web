@@ -24,3 +24,14 @@ NEXT_PUBLIC_PLAY_STORE_URL = ""
 binding = "TRUEROUTE_DATA"
 bucket_name = "trueroute-data"
 preview_bucket_name = "trueroute-data"
+
+# ---------------------------------------------------------------------------
+# D1 database binding
+# After creating the database with `wrangler d1 create trueroute-d1`,
+# replace the placeholder database_id below with the real UUID.
+# Then apply the migration: `wrangler d1 migrations apply trueroute-d1`
+# ---------------------------------------------------------------------------
+[[d1_databases]]
+binding = "TRUEROUTE_DB"
+database_name = "trueroute-d1"
+database_id = "placeholder-replace-after-wrangler-d1-create"
