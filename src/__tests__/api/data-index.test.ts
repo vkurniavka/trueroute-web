@@ -1,16 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { R2Error } from '@/lib/r2'
-import type { Asset, Region, RegionIndex } from '@/schemas/regions.schema'
+import type { RegionIndex } from '@/schemas/regions.schema'
 
-vi.mock('@/lib/r2', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/r2')>('@/lib/r2')
-  return {
-    ...actual,
-    getR2Object: vi.fn(),
-  }
-})
+// Mock @cloudflare/next-on-pages to provide a fake D1 binding
+const mockAll = vi.fn()
+const mockBind = vi.fn(() => ({ all: mockAll }))
+const mockPrepare = vi.fn(() => ({ bind: mockBind }))
 
-import { getR2Object } from '@/lib/r2'
+vi.mock('@cloudflare/next-on-pages', () => ({
+  getRequestContext: () => ({
+    env: {
+      TRUEROUTE_DB: { prepare: mockPrepare },
+    },
+  }),
+}))
+
+// Must import after mocks are set up
 import { GET } from '@/app/api/data/index/route'
 
 const OBLAST_IDS = [
@@ -42,39 +46,24 @@ const OBLAST_IDS = [
   'zhytomyr',
 ]
 
-function makeAsset(overrides?: Partial<Asset>): Asset {
-  return {
-    url: 'https://r2.trueroute.app/regions/kyiv-oblast/maps/kyiv-oblast.pmtiles',
-    sizeBytes: 1048576,
-    sha256: 'a'.repeat(64),
-    generatedAt: '2026-01-15T10:30:00Z',
-    ...overrides,
+function makeJoinedRows() {
+  const fileTypes = ['geocode', 'maps', 'poi'] as const
+  const rows = []
+  for (const id of OBLAST_IDS) {
+    for (const ft of fileTypes) {
+      rows.push({
+        region_code: id,
+        region_name: id,
+        region_name_uk: id,
+        file_type: ft,
+        url: `https://r2.trueroute.app/regions/${id}/${ft}/${id}.pmtiles`,
+        size_bytes: 1048576,
+        sha256: 'a'.repeat(64),
+        generated_at: '2026-01-15T10:30:00Z',
+      })
+    }
   }
-}
-
-function makeRegion(overrides?: Partial<Region>): Region {
-  return {
-    id: 'kyiv-oblast',
-    name: 'Kyiv Oblast',
-    nameUk: 'Київська область',
-    assets: {
-      maps: makeAsset(),
-      geocode: makeAsset(),
-      poi: makeAsset(),
-    },
-    ...overrides,
-  }
-}
-
-function makeRegionIndex(overrides?: Partial<RegionIndex>): RegionIndex {
-  return {
-    version: 1,
-    generatedAt: '2026-01-15T10:30:00Z',
-    regions: OBLAST_IDS.map((id) =>
-      makeRegion({ id, name: id, nameUk: id }),
-    ),
-    ...overrides,
-  }
+  return rows
 }
 
 describe('GET /api/data/index', () => {
@@ -83,11 +72,10 @@ describe('GET /api/data/index', () => {
   })
 
   it('returns validated RegionIndex with 200 and correct cache headers', async () => {
-    const mockData = makeRegionIndex()
-    vi.mocked(getR2Object).mockResolvedValue(mockData)
+    mockAll.mockResolvedValue({ results: makeJoinedRows() })
 
     const response = await GET()
-    const data = await response.json()
+    const data: RegionIndex = await response.json()
 
     expect(response.status).toBe(200)
     expect(response.headers.get('Cache-Control')).toBe(
@@ -95,12 +83,15 @@ describe('GET /api/data/index', () => {
     )
     expect(data.version).toBe(1)
     expect(data.regions).toHaveLength(26)
+
+    // Deprecation headers
+    expect(response.headers.get('Deprecation')).toBe('true')
+    expect(response.headers.get('Sunset')).toBeTruthy()
+    expect(response.headers.get('Link')).toContain('successor-version')
   })
 
-  it('returns 503 with Retry-After when R2 is unavailable', async () => {
-    vi.mocked(getR2Object).mockRejectedValue(
-      new R2Error('Failed to fetch object: index.json', 'R2_UNAVAILABLE'),
-    )
+  it('returns 503 with Retry-After when D1 is unavailable', async () => {
+    mockAll.mockRejectedValue(new Error('D1 connection failed'))
 
     const response = await GET()
     const data = await response.json()
@@ -110,14 +101,14 @@ describe('GET /api/data/index', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(data).toEqual({
       error: 'Data service unavailable',
-      code: 'R2_UNAVAILABLE',
+      code: 'DB_UNAVAILABLE',
     })
   })
 
-  it('returns 503 with Retry-After when R2 object not found', async () => {
-    vi.mocked(getR2Object).mockRejectedValue(
-      new R2Error('Object not found: index.json', 'R2_NOT_FOUND'),
-    )
+  it('returns 503 with Retry-After when D1 query fails', async () => {
+    mockPrepare.mockImplementationOnce(() => {
+      throw new Error('D1 prepare failed')
+    })
 
     const response = await GET()
     const data = await response.json()
@@ -127,15 +118,13 @@ describe('GET /api/data/index', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(data).toEqual({
       error: 'Data service unavailable',
-      code: 'R2_UNAVAILABLE',
+      code: 'DB_UNAVAILABLE',
     })
   })
 
   it('returns 503 with INDEX_INVALID when schema validation fails', async () => {
-    vi.mocked(getR2Object).mockResolvedValue({
-      version: 'not-a-number',
-      regions: [],
-    })
+    // Return empty results — will fail RegionIndexSchema .min(25) on regions
+    mockAll.mockResolvedValue({ results: [] })
 
     const response = await GET()
     const data = await response.json()
@@ -149,7 +138,7 @@ describe('GET /api/data/index', () => {
   })
 
   it('sets correct Cache-Control on success response', async () => {
-    vi.mocked(getR2Object).mockResolvedValue(makeRegionIndex())
+    mockAll.mockResolvedValue({ results: makeJoinedRows() })
 
     const response = await GET()
 
