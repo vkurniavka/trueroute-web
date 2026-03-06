@@ -8,7 +8,7 @@ import type { Asset, Region, RegionIndex } from '@/schemas/regions.schema'
 
 function makeAsset(overrides?: Partial<Asset>): Asset {
   return {
-    url: 'https://r2.trueroute.app/regions/kyiv-oblast/maps/kyiv-oblast.pmtiles',
+    url: 'https://cdn.trueroutenavigation.com/regions/kyiv-oblast/maps/kyiv-oblast.pmtiles',
     sizeBytes: 1048576,
     sha256: 'a'.repeat(64),
     generatedAt: '2026-01-15T10:30:00Z',

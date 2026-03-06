@@ -56,7 +56,7 @@ function makeJoinedRows() {
         region_name: id,
         region_name_uk: id,
         file_type: ft,
-        url: `https://r2.trueroute.app/regions/${id}/${ft}/${id}.pmtiles`,
+        url: `https://cdn.trueroutenavigation.com/regions/${id}/${ft}/${id}.pmtiles`,
         size_bytes: 1048576,
         sha256: 'a'.repeat(64),
         generated_at: '2026-01-15T10:30:00Z',

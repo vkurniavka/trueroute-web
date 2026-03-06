@@ -16,11 +16,11 @@ set -euo pipefail
 #
 # Optional env vars:
 #   R2_BUCKET_NAME         — R2 bucket name (default: trueroute-data)
-#   CDN_BASE_URL           — Public CDN URL prefix (default: https://data.trueroute.app)
+#   CDN_BASE_URL           — Public CDN URL prefix (default: https://cdn.trueroutenavigation.com)
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CDN_BASE_URL="${CDN_BASE_URL:-https://data.trueroute.app}"
+CDN_BASE_URL="${CDN_BASE_URL:-https://cdn.trueroutenavigation.com}"
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -165,7 +165,7 @@ This script:
 
 **Prerequisites:** `aws` CLI v2, `python3` 3.9+, `sha256sum` (coreutils)
 
-**Optional env var:** `CDN_BASE_URL` — public CDN URL prefix for asset URLs in index.json (defaults to `https://data.trueroute.app`)
+**Optional env var:** `CDN_BASE_URL` — public CDN URL prefix for asset URLs in index.json (defaults to `https://cdn.trueroutenavigation.com`)
 
 **Output files in R2:**
 

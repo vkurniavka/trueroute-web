@@ -24,7 +24,7 @@ set -euo pipefail
 #
 # Optional env vars:
 #   R2_BUCKET_NAME         R2 bucket name       (default: trueroute-data)
-#   CDN_BASE_URL           Public CDN base URL  (default: https://data.trueroute.app)
+#   CDN_BASE_URL           Public CDN base URL  (default: https://cdn.trueroutenavigation.com)
 #   D1_DATABASE_NAME       D1 database name     (default: trueroute-d1)
 # =============================================================================
 
@@ -34,7 +34,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Defaults
 # ---------------------------------------------------------------------------
 R2_BUCKET_NAME="${R2_BUCKET_NAME:-trueroute-data}"
-CDN_BASE_URL="${CDN_BASE_URL:-https://data.trueroute.app}"
+CDN_BASE_URL="${CDN_BASE_URL:-https://cdn.trueroutenavigation.com}"
 D1_DATABASE_NAME="${D1_DATABASE_NAME:-trueroute-d1}"
 
 # ---------------------------------------------------------------------------
@@ -220,13 +220,14 @@ elif ! $D1_ONLY; then
 
   log "STAGE 2: Complete"
 else
-  # D1-only: download the current index.json from R2
+  # D1-only: download the current index.json from R2 (use wrangler — no R2 credentials needed)
   sep
-  log "STAGE 2 (INDEX): Skipped — downloading current index.json from R2"
-  aws s3 cp \
-    "s3://${R2_BUCKET_NAME}/index.json" \
-    "$INDEX_JSON" \
-    --endpoint-url "$R2_ENDPOINT_URL"
+  log "STAGE 2 (INDEX): Skipped — downloading current index.json from R2 via wrangler"
+  wrangler r2 object get "${R2_BUCKET_NAME}/index.json" --file "$INDEX_JSON" 2>&1 \
+    | grep -v "^🪵\|Logs were written" || true
+  if [[ ! -s "$INDEX_JSON" ]]; then
+    die "Failed to download index.json from R2 bucket '${R2_BUCKET_NAME}'"
+  fi
   log "Downloaded index.json ($(wc -c < "$INDEX_JSON") bytes)"
 fi
 

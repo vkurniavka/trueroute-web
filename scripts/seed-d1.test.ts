@@ -114,7 +114,7 @@ describe('generateSeedSql', () => {
 
   it('includes region file metadata (url, size, sha256, generated_at)', () => {
     const sql = generateSeedSql(sampleIndex)
-    expect(sql).toContain('https://data.trueroute.app/regions/kyiv-city/maps/kyiv-city.pmtiles')
+    expect(sql).toContain('https://cdn.trueroutenavigation.com/regions/kyiv-city/maps/kyiv-city.pmtiles')
     expect(sql).toContain('size_bytes')
     expect(sql).toContain('sha256')
     expect(sql).toContain('generated_at')
@@ -129,7 +129,7 @@ describe('generateSeedSql', () => {
           assets: {
             ...sampleIndex.regions[0].assets,
             routing: {
-              url: 'https://data.trueroute.app/regions/cherkasy/routing/cherkasy.osrm',
+              url: 'https://cdn.trueroutenavigation.com/regions/cherkasy/routing/cherkasy.osrm',
               sizeBytes: 1234,
               sha256: 'a'.repeat(64),
               generatedAt: '2026-03-04T00:00:00Z',

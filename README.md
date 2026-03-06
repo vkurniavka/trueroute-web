@@ -80,7 +80,7 @@ export R2_ACCESS_KEY_ID="<key>"
 export R2_SECRET_ACCESS_KEY="<secret>"
 # Optional:
 export R2_BUCKET_NAME="trueroute-data"       # default
-export CDN_BASE_URL="https://data.trueroute.app"  # default
+export CDN_BASE_URL="https://cdn.trueroutenavigation.com"  # default
 export D1_DATABASE_NAME="trueroute-d1"       # default
 ```
 
