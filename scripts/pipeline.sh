@@ -130,13 +130,11 @@ fi
 # ---------------------------------------------------------------------------
 # Validate required env vars (not needed for D1-only)
 # ---------------------------------------------------------------------------
-if ! $D1_ONLY; then
-  : "${R2_ENDPOINT_URL:?R2_ENDPOINT_URL is not set}"
-  : "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID is not set}"
-  : "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY is not set}"
-  export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
-  export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
-fi
+: "${R2_ENDPOINT_URL:?R2_ENDPOINT_URL is not set}"
+: "${R2_ACCESS_KEY_ID:?R2_ACCESS_KEY_ID is not set}"
+: "${R2_SECRET_ACCESS_KEY:?R2_SECRET_ACCESS_KEY is not set}"
+export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
 
 # ---------------------------------------------------------------------------
 # Check required tools
