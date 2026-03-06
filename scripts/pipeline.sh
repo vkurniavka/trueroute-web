@@ -138,7 +138,7 @@ fi
 # ---------------------------------------------------------------------------
 REQUIRED_TOOLS=("aws" "wrangler" "node" "npx")
 if ! $SKIP_BUILD; then
-  REQUIRED_TOOLS+=("tilemaker" "osmium" "python3" "curl")
+  REQUIRED_TOOLS+=("tilemaker" "pmtiles" "osmium" "python3" "curl")
 fi
 
 for cmd in "${REQUIRED_TOOLS[@]}"; do

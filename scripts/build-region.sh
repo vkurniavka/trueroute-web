@@ -38,7 +38,7 @@ fi
 # ---------------------------------------------------------------------------
 # Check required tools
 # ---------------------------------------------------------------------------
-for cmd in tilemaker aws curl osmium python3; do
+for cmd in tilemaker pmtiles aws curl osmium python3; do
   command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
 done
 
@@ -72,15 +72,22 @@ curl -L --fail --progress-bar \
   "${GEOFABRIK_BASE}/${REGION_ID}-latest.osm.pbf"
 log "Step 1: Download complete — $(du -h "$OSM_FILE" | cut -f1)"
 
-log "Step 1: Converting OSM to PMTiles via tilemaker (minzoom=5, maxzoom=14)..."
+log "Step 1: Converting OSM to MBTiles via tilemaker (minzoom=5, maxzoom=14)..."
+MBTILES_FILE="$TMPDIR/${REGION_ID}.mbtiles"
 PMTILES_FILE="$TMPDIR/${REGION_ID}.pmtiles"
+mkdir -p "$TMPDIR/tilemaker-store"
 tilemaker \
   --input "$OSM_FILE" \
-  --output "$PMTILES_FILE" \
+  --output "$MBTILES_FILE" \
   --config "$SCRIPT_DIR/tilemaker/config.json" \
   --process "$SCRIPT_DIR/tilemaker/process.lua" \
   --store "$TMPDIR/tilemaker-store"
-log "Step 1: Conversion complete — $(du -h "$PMTILES_FILE" | cut -f1)"
+log "Step 1: MBTiles complete — $(du -h "$MBTILES_FILE" | cut -f1)"
+
+log "Step 1: Converting MBTiles → PMTiles..."
+pmtiles convert "$MBTILES_FILE" "$PMTILES_FILE"
+rm -f "$MBTILES_FILE"
+log "Step 1: PMTiles ready — $(du -h "$PMTILES_FILE" | cut -f1)"
 
 log "Step 1: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/maps/${REGION_ID}.pmtiles"
 aws s3 cp "$PMTILES_FILE" \

@@ -73,12 +73,23 @@ jobs:
         if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
         run: |
           sudo apt-get update -qq
-          # osmium-tool — OSM data filtering (used by build-region.sh for geocode/POI)
-          # tilemaker   — OSM PBF → PMTiles conversion (replaces the old pmtiles convert call)
+          # osmium-tool — OSM data filtering (geocode/POI extraction)
+          # tilemaker   — OSM PBF → MBTiles (apt v2.4 does not support PMTiles output)
           sudo apt-get install -y osmium-tool tilemaker
-          tilemaker --help 2>&1 | head -3 || true   # --version exits 255; --help is safer
-          # Python osmium binding (used by build-geocode-db.py and build-poi-json.py)
+          tilemaker --help 2>&1 | head -2 || true
+          # Python osmium binding (build-geocode-db.py and build-poi-json.py)
           pip install osmium
+
+      - name: Install pmtiles CLI
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
+        run: |
+          # go-pmtiles: MBTiles → PMTiles conversion step (tilemaker apt build lacks PMTiles output)
+          PMTILES_VERSION="1.24.1"
+          curl -fsSL \
+            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
+            | tar -xz pmtiles
+          sudo mv pmtiles /usr/local/bin/pmtiles
+          pmtiles --help 2>&1 | head -2 || true
 
       # -----------------------------------------------------------------------
       # 4. Validate inputs
