@@ -155,7 +155,7 @@ jobs:
       #    (only when R2 was written to — skip for d1-only)
       # -----------------------------------------------------------------------
       - name: Validate R2 checksums
-        if: ${{ (github.event_name == 'schedule') || (inputs.mode != 'd1-only') }}
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'reindex-only') }}
         env:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}

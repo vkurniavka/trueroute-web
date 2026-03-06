@@ -96,6 +96,7 @@ if $DRY_RUN; then
   sep
   log "DRY RUN — pipeline plan:"
   log ""
+  _SINGLE_REGION_BUILD=$([[ -n "$REGION" ]] && ! $SKIP_BUILD && echo true || echo false)
   if ! $SKIP_BUILD; then
     if [[ -n "$REGION" ]]; then
       log "  STAGE 1 (BUILD):  build-region.sh $REGION"
@@ -105,15 +106,19 @@ if $DRY_RUN; then
   else
     log "  STAGE 1 (BUILD):  SKIPPED"
   fi
-  if ! $D1_ONLY; then
+  if [[ "$_SINGLE_REGION_BUILD" == "true" ]]; then
+    log "  STAGE 2 (INDEX):  SKIPPED (single-region build — run --skip-build after all regions are built)"
+    log "  STAGE 3 (D1):     SKIPPED (single-region build)"
+  elif ! $D1_ONLY; then
     log "  STAGE 2 (INDEX):  generate-index.sh → index.json + checksums.json → R2"
+    if ! $SKIP_D1; then
+      log "  STAGE 3 (D1):     seed-d1.ts → SQL → wrangler d1 execute $D1_DATABASE_NAME --remote"
+    else
+      log "  STAGE 3 (D1):     SKIPPED"
+    fi
   else
     log "  STAGE 2 (INDEX):  SKIPPED — downloading current index.json from R2"
-  fi
-  if ! $SKIP_D1; then
     log "  STAGE 3 (D1):     seed-d1.ts → SQL → wrangler d1 execute $D1_DATABASE_NAME --remote"
-  else
-    log "  STAGE 3 (D1):     SKIPPED"
   fi
   log ""
   log "Env:  R2_BUCKET_NAME=$R2_BUCKET_NAME  CDN_BASE_URL=$CDN_BASE_URL  D1_DATABASE_NAME=$D1_DATABASE_NAME"
@@ -155,6 +160,18 @@ INDEX_JSON="$WORK_DIR/index.json"
 SEED_SQL="$WORK_DIR/seed.sql"
 
 START_TIME=$(date +%s)
+# Single-region builds can't produce a valid full index — skip stages 2+3
+# unless the caller explicitly passes --skip-build (reindex-only) or --d1-only
+if [[ -n "$REGION" ]] && ! $SKIP_BUILD; then
+  log "Note: single-region build — skipping Stage 2 (INDEX) and Stage 3 (D1)."
+  log "      Run './scripts/pipeline.sh --skip-build' once all regions are built."
+  SKIP_D1=true
+  # Mark that we should skip index too (reuse D1_ONLY flag logic for stage 2)
+  _SKIP_INDEX=true
+else
+  _SKIP_INDEX=false
+fi
+
 sep
 log "TrueRoute data pipeline starting"
 log "  Region:      ${REGION:-all}"
@@ -183,7 +200,7 @@ fi
 # ===========================================================================
 # STAGE 2 — Generate index.json + checksums.json and upload to R2
 # ===========================================================================
-if ! $D1_ONLY; then
+if ! $D1_ONLY && ! $_SKIP_INDEX; then
   sep
   log "STAGE 2: Generating index.json and checksums.json"
   "$SCRIPT_DIR/generate-index.sh"
@@ -240,12 +257,15 @@ ELAPSED=$((END_TIME - START_TIME))
 sep
 log "Pipeline complete in ${ELAPSED}s"
 if ! $SKIP_BUILD; then
-  log "  ✓ Region files built and uploaded to R2"
+  log "  ✓ Region files built and uploaded to R2 (${REGION:-all regions})"
 fi
-if ! $D1_ONLY; then
+if ! $D1_ONLY && ! $_SKIP_INDEX; then
   log "  ✓ index.json + checksums.json uploaded to R2"
 fi
 if ! $SKIP_D1; then
   log "  ✓ D1 database seeded: $D1_DATABASE_NAME"
+fi
+if $_SKIP_INDEX; then
+  log "  → Next: run './scripts/pipeline.sh --skip-build' to regenerate index + seed D1"
 fi
 sep
