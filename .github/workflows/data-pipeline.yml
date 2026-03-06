@@ -33,7 +33,6 @@ permissions:
 env:
   R2_BUCKET_NAME: trueroute-data
   CDN_BASE_URL: https://cdn.trueroutenavigation.com
-  CDN_BASE_URL: https://data.trueroute.app
   D1_DATABASE_NAME: trueroute-d1
 
 jobs:
