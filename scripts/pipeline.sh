@@ -220,11 +220,13 @@ elif ! $D1_ONLY; then
 
   log "STAGE 2: Complete"
 else
-  # D1-only: download the current index.json from R2 (use wrangler — no R2 credentials needed)
+  # D1-only: download the current index.json from R2 via S3-compatible API
   sep
-  log "STAGE 2 (INDEX): Skipped — downloading current index.json from R2 via wrangler"
-  wrangler r2 object get "${R2_BUCKET_NAME}/index.json" --file "$INDEX_JSON" 2>&1 \
-    | grep -v "^🪵\|Logs were written" || true
+  log "STAGE 2 (INDEX): Skipped — downloading current index.json from R2"
+  aws s3 cp \
+    "s3://${R2_BUCKET_NAME}/index.json" \
+    "$INDEX_JSON" \
+    --endpoint-url "$R2_ENDPOINT_URL"
   if [[ ! -s "$INDEX_JSON" ]]; then
     die "Failed to download index.json from R2 bucket '${R2_BUCKET_NAME}'"
   fi
