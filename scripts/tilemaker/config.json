@@ -1,14 +1,4 @@
 {
-  "description": "TrueRoute navigation tiles — roads, places, water, boundaries",
-  "settings": {
-    "minzoom": 5,
-    "maxzoom": 14,
-    "basezoom": 14,
-    "include_ids": false,
-    "compress": "gzip",
-    "mvt_version": 2,
-    "attribution": "© OpenStreetMap contributors"
-  },
   "layers": {
     "transportation": {
       "minzoom": 7,
@@ -32,7 +22,10 @@
     },
     "boundary": {
       "minzoom": 2,
-      "maxzoom": 14
+      "maxzoom": 14,
+      "simplify_below": 12,
+      "simplify_level": 0.0003,
+      "simplify_ratio": 2
     },
     "building": {
       "minzoom": 13,
@@ -42,5 +35,16 @@
       "minzoom": 10,
       "maxzoom": 14
     }
+  },
+  "settings": {
+    "minzoom": 5,
+    "maxzoom": 14,
+    "basezoom": 14,
+    "include_ids": false,
+    "compress": "gzip",
+    "mvt_version": 2,
+    "name": "TrueRoute",
+    "description": "TrueRoute navigation tiles — roads, places, water, boundaries",
+    "version": "1"
   }
 }
