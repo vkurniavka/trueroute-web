@@ -62,6 +62,70 @@ wrangler d1 execute trueroute-d1 --remote --file=seed.sql
 
 The script is idempotent — safe to re-run. It deletes existing data for the country and re-inserts within a transaction.
 
+## Data Pipeline
+
+`scripts/pipeline.sh` is the master orchestrator. It runs three stages in order:
+
+| Stage | What it does |
+|-------|-------------|
+| **BUILD** | Compiles per-region files (PMTiles + geocode SQLite + POI GeoJSON) and uploads to R2 |
+| **INDEX** | Generates `index.json` + `checksums.json` from R2 assets and uploads both |
+| **D1** | Downloads the fresh `index.json`, generates seed SQL, applies to Cloudflare D1 |
+
+### Required environment variables
+
+```bash
+export R2_ENDPOINT_URL="https://<account>.r2.cloudflarestorage.com"
+export R2_ACCESS_KEY_ID="<key>"
+export R2_SECRET_ACCESS_KEY="<secret>"
+# Optional:
+export R2_BUCKET_NAME="trueroute-data"       # default
+export CDN_BASE_URL="https://data.trueroute.app"  # default
+export D1_DATABASE_NAME="trueroute-d1"       # default
+```
+
+### Common commands
+
+```bash
+# Full run — build all 26 Ukrainian oblasts, update index, seed D1
+./scripts/pipeline.sh
+
+# Build a single region only (faster for testing)
+./scripts/pipeline.sh --region lviv
+
+# Re-index + seed D1 without rebuilding files (files already in R2)
+./scripts/pipeline.sh --skip-build
+
+# Build + index only, skip D1 update
+./scripts/pipeline.sh --skip-d1
+
+# Seed D1 from the current index.json already in R2 (no build, no re-index)
+./scripts/pipeline.sh --d1-only
+
+# Preview the plan without making any changes
+./scripts/pipeline.sh --dry-run
+./scripts/pipeline.sh --region kyiv-oblast --dry-run
+```
+
+### Individual scripts
+
+If you need to run a single stage manually:
+
+```bash
+# Build one region → R2
+./scripts/build-region.sh lviv
+
+# Build all regions → R2
+./scripts/build-all-regions.sh
+
+# Generate index.json + checksums.json → R2
+./scripts/generate-index.sh
+
+# Seed D1 from a local index.json
+npx tsx scripts/seed-d1.ts path/to/index.json > seed.sql
+wrangler d1 execute trueroute-d1 --remote --file=seed.sql
+```
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
