@@ -148,6 +148,76 @@ Every script must be safe to re-run:
 - Log every upload with: region id, asset type, file size, SHA256
 - Exit with non-zero code if any upload fails — never silently continue
 
+## D1 Database — Migrations and Seeding
+
+### Migration Files
+
+All schema changes go through numbered SQL files in `migrations/`:
+
+```
+migrations/
+├── 0001_initial.sql     ← countries, regions, region_files tables
+├── 0002_add_column.sql  ← example: future schema change
+└── ...
+```
+
+**Rules:**
+- Name format: `{NNNN}_{description}.sql` — zero-padded, sequential
+- **Never edit a migration after it has been merged** — create a new one instead
+- Always include `CREATE INDEX` for foreign key columns
+- Use `CHECK` constraints for enum-like columns (e.g. `file_type IN ('maps', 'geocode', 'poi', 'routing')`)
+- No `DROP TABLE` from application code — only in migrations, and only with explicit approval
+
+Apply migrations:
+```bash
+wrangler d1 migrations apply trueroute-d1          # production
+wrangler d1 migrations apply trueroute-d1 --local  # local dev
+```
+
+### Current Schema (`migrations/0001_initial.sql`)
+
+| Table | Key columns | Notes |
+|-------|-------------|-------|
+| `countries` | `code` (unique), `name`, `name_uk`, `enabled` | ISO 3166-1 alpha-2 codes |
+| `regions` | `country_id` (FK), `code`, `name`, `name_uk` | One row per oblast/region |
+| `region_files` | `region_id` (FK), `file_type`, `url`, `size_bytes`, `sha256`, `generated_at` | One row per downloadable asset |
+
+Internal `id` columns are `INTEGER PRIMARY KEY AUTOINCREMENT` — never exposed in API responses.
+
+### Seed Script (`scripts/seed-d1.ts`)
+
+The seed script converts an R2 `index.json` file into idempotent SQL:
+
+```bash
+# Generate SQL from index.json
+npx tsx scripts/seed-d1.ts scripts/sample-index.json > seed.sql
+
+# Apply to D1
+wrangler d1 execute trueroute-d1 --file=seed.sql          # production
+wrangler d1 execute trueroute-d1 --file=seed.sql --local   # local dev
+```
+
+**How it works:**
+1. Reads and validates input against `RegionIndexSchema`
+2. Wraps all SQL in `BEGIN TRANSACTION` / `COMMIT`
+3. Uses `INSERT OR REPLACE` for the country row
+4. Deletes all existing `region_files` and `regions` for the country before re-inserting
+5. Inserts regions and their files with subqueries (no hardcoded IDs)
+
+**Idempotency guarantees:**
+- Safe to re-run — transaction ensures atomic replace of all data
+- No orphaned rows — deletes cascade from regions to region_files
+- Validates input before generating any SQL — fails fast on bad data
+
+### Writing New Seed Scripts
+
+If you add a new seed script to `scripts/`:
+- It **must** be idempotent — running it twice produces the same result
+- Use transactions (`BEGIN` / `COMMIT`) to wrap destructive operations
+- Validate all input with Zod schemas before generating SQL
+- Use `INSERT OR REPLACE` or delete-then-insert patterns — never assume empty tables
+- Never hardcode internal `id` values — use subqueries to resolve by `code`
+
 ## Oblast ID Reference
 
 Use these exact IDs in all file names and `index.json` entries:

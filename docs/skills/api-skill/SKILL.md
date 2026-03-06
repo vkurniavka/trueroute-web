@@ -48,6 +48,101 @@ const client = new S3Client({ ... })
 - `listR2Objects(prefix: string): Promise<string[]>` — lists keys under a prefix
 - `getR2Metadata(key: string): Promise<Record<string, string>>` — fetches object metadata
 
+## D1 Database Access Pattern
+
+Always use the shared client. Never access `env.TRUEROUTE_DB` directly in a Route Handler.
+
+```typescript
+// ✅ Correct — go through src/lib/db.ts
+import { getRequestContext } from '@cloudflare/next-on-pages'
+import { getDb, D1Error } from '@/lib/db'
+import type { CloudflareEnv } from '@/lib/env'
+
+export async function GET(): Promise<NextResponse> {
+  const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
+  const db = getDb(env.TRUEROUTE_DB)
+
+  const rows = await db.queryAll<MyRow>(
+    'SELECT code, name, name_uk FROM my_table WHERE enabled = ?',
+    [1],
+  )
+}
+
+// ❌ Never do this
+const { env } = getRequestContext()
+const result = await env.TRUEROUTE_DB.prepare('SELECT ...').all()
+```
+
+### DbClient API (`src/lib/db.ts`)
+
+| Method | Returns | Use for |
+|--------|---------|---------|
+| `queryAll<T>(sql, params?)` | `T[]` | SELECT returning multiple rows |
+| `queryFirst<T>(sql, params?)` | `T \| null` | SELECT returning one row or null |
+| `execute(sql, params?)` | `D1Result` | INSERT, UPDATE, DELETE |
+| `batch(statements)` | `D1Result[]` | Multiple statements in one round-trip |
+
+All methods throw `D1Error` on failure — never raw D1 errors.
+
+### D1 Error Handling
+
+Catch `D1Error` and return the standard error shape:
+
+```typescript
+import { D1Error } from '@/lib/db'
+
+try {
+  rows = await db.queryAll<MyRow>(sql, params)
+} catch (error: unknown) {
+  if (error instanceof D1Error) {
+    return NextResponse.json<ApiError>(
+      { error: 'Data service unavailable', code: 'DB_UNAVAILABLE' },
+      {
+        status: 503,
+        headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' },
+      },
+    )
+  }
+  // Log and return same shape for unexpected errors
+  logger.error('Unexpected error', { error })
+  return NextResponse.json<ApiError>(
+    { error: 'Data service unavailable', code: 'DB_UNAVAILABLE' },
+    { status: 503, headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' } },
+  )
+}
+```
+
+### D1 Row-to-Response Mapping
+
+- **Never expose internal `id` integers** — use `code` or slug fields only
+- **Map `snake_case` DB columns to `camelCase` JSON** — e.g. `name_uk` → `nameUk`
+
+```typescript
+// ✅ Correct — map columns, omit id
+const data = {
+  countries: rows.map((r) => ({
+    code: r.code,
+    name: r.name,
+    nameUk: r.name_uk,  // snake_case → camelCase
+  })),
+}
+
+// ❌ Never do this — exposes internal id
+const data = { countries: rows }
+```
+
+### Parameterised Queries Only
+
+Always use `?` placeholders. Never interpolate user input into SQL.
+
+```typescript
+// ✅ Correct
+db.queryAll('SELECT * FROM regions WHERE country_id = (SELECT id FROM countries WHERE code = ?)', [countryCode])
+
+// ❌ Never do this
+db.queryAll(`SELECT * FROM regions WHERE code = '${regionCode}'`)
+```
+
 ## Route Handler Rules
 
 ```typescript
@@ -177,6 +272,66 @@ describe('GET /api/data/index', () => {
   })
 })
 ```
+
+## Testing D1 Routes
+
+Mock `@cloudflare/next-on-pages` to provide a fake D1 binding. Never hit a real database in tests.
+
+```typescript
+// __tests__/api/countries.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Set up mock chain: prepare → bind → all
+const mockAll = vi.fn()
+const mockBind = vi.fn(() => ({ all: mockAll }))
+const mockPrepare = vi.fn(() => ({ bind: mockBind }))
+
+vi.mock('@cloudflare/next-on-pages', () => ({
+  getRequestContext: () => ({
+    env: {
+      TRUEROUTE_DB: { prepare: mockPrepare },
+    },
+  }),
+}))
+
+// Import route AFTER mocks are set up
+import { GET } from '@/app/api/v2/countries/route'
+
+describe('GET /api/v2/countries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns data when D1 succeeds', async () => {
+    mockAll.mockResolvedValue({
+      results: [{ code: 'UA', name: 'Ukraine', name_uk: 'Україна' }],
+    })
+
+    const response = await GET()
+    expect(response.status).toBe(200)
+  })
+
+  it('returns 503 when D1 fails', async () => {
+    mockAll.mockRejectedValue(new Error('D1 connection failed'))
+
+    const response = await GET()
+    const data = await response.json()
+
+    expect(response.status).toBe(503)
+    expect(data).toEqual({
+      error: 'Data service unavailable',
+      code: 'DB_UNAVAILABLE',
+    })
+  })
+})
+```
+
+Key points:
+- Mock the full chain: `prepare` → `bind` → `all`/`first`/`run`
+- Import the route handler **after** `vi.mock()` calls
+- Call `vi.clearAllMocks()` in `beforeEach`
+- Test both success path and D1 failure path (503 + `DB_UNAVAILABLE`)
+- Verify internal DB `id` fields are never exposed in responses
 
 ## Done When
 
