@@ -29,6 +29,39 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## D1 Database
+
+The project uses Cloudflare D1 for structured data (countries, regions, downloadable file metadata).
+
+### Setup
+
+```bash
+# 1. Create the D1 database
+wrangler d1 create trueroute-d1
+
+# 2. Update wrangler.toml with the database_id from step 1
+
+# 3. Apply migrations
+wrangler d1 migrations apply trueroute-d1
+```
+
+### Seeding
+
+The seed script reads an `index.json` file and generates idempotent SQL:
+
+```bash
+# Generate seed SQL from index.json
+npx tsx scripts/seed-d1.ts scripts/sample-index.json > seed.sql
+
+# Apply to local D1
+wrangler d1 execute trueroute-d1 --local --file=seed.sql
+
+# Apply to remote D1
+wrangler d1 execute trueroute-d1 --remote --file=seed.sql
+```
+
+The script is idempotent — safe to re-run. It deletes existing data for the country and re-inserts within a transaction.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
