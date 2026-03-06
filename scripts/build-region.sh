@@ -113,7 +113,7 @@ log "Extracting oblast '$REGION_ID' from Ukraine PBF (bbox: $BBOX)..."
 OSM_FILE="$TMPDIR/${REGION_ID}.osm.pbf"
 osmium extract \
   --bbox "$BBOX" \
-  --strategy complete-ways \
+  --strategy complete_ways \
   --output "$OSM_FILE" \
   --overwrite \
   "$UKRAINE_PBF"
