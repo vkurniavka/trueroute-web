@@ -2,43 +2,76 @@
 set -euo pipefail
 
 # =============================================================================
-# build-region.sh — Build regional data package (Steps 1–2)
+# build-region.sh — Build regional data package for one Ukrainian oblast
 #
-# Usage: ./scripts/build-region.sh <region-id>
-# Example: ./scripts/build-region.sh kyiv-oblast
+# Usage:
+#   ./scripts/build-region.sh <region-id>
+#   ./scripts/build-region.sh <region-id> --ukraine-pbf /path/to/ukraine-latest.osm.pbf
 #
-# Downloads OSM extract from Geofabrik, converts to PMTiles, builds geocode
-# SQLite FTS5 index, and uploads both to R2.
+# If --ukraine-pbf is not provided, the script downloads ukraine-latest.osm.pbf
+# from Geofabrik (~1.6 GB). When building all regions, pass a shared PBF path
+# from build-all-regions.sh to avoid downloading it 26 times.
+#
+# Steps:
+#   1. Extract oblast from Ukraine PBF using osmium extract (bbox from regions-bbox.json)
+#   2. Build PMTiles: tilemaker (→ .mbtiles) + pmtiles convert (→ .pmtiles) → R2
+#   3. Build geocode SQLite FTS5 index → R2
+#   4. Build POI GeoJSON (speed cameras + limits) → R2
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-GEOFABRIK_BASE="https://download.geofabrik.de/europe/ukraine"
+GEOFABRIK_UKRAINE="https://download.geofabrik.de/europe/ukraine-latest.osm.pbf"
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-log() {
-  echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"
-}
-
-die() {
-  log "ERROR: $*" >&2
-  exit 1
-}
+log() { echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"; }
+die() { log "ERROR: $*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
-# Validate argument
+# Parse arguments
 # ---------------------------------------------------------------------------
 REGION_ID="${1:-}"
-if [[ -z "$REGION_ID" ]]; then
-  die "Usage: $0 <region-id>  (e.g. kyiv-oblast)"
-fi
+UKRAINE_PBF=""
+
+shift || true
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --ukraine-pbf)
+      UKRAINE_PBF="$2"
+      shift 2
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -z "$REGION_ID" ]] && die "Usage: $0 <region-id> [--ukraine-pbf /path/to/ukraine-latest.osm.pbf]"
+
+# ---------------------------------------------------------------------------
+# Check bounding box exists for this region
+# ---------------------------------------------------------------------------
+BBOX_FILE="$SCRIPT_DIR/regions-bbox.json"
+[[ -f "$BBOX_FILE" ]] || die "regions-bbox.json not found at $BBOX_FILE"
+
+BBOX=$(python3 -c "
+import json, sys
+data = json.load(open('$BBOX_FILE'))
+region = '$REGION_ID'
+if region not in data:
+    print(f'ERROR: No bounding box for region: {region}', file=sys.stderr)
+    sys.exit(1)
+bbox = data[region]
+print(f'{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}')
+") || die "Unknown region '$REGION_ID' — add it to regions-bbox.json"
+
+log "Region: $REGION_ID  bbox: $BBOX"
 
 # ---------------------------------------------------------------------------
 # Check required tools
 # ---------------------------------------------------------------------------
-for cmd in tilemaker pmtiles aws curl osmium python3; do
+for cmd in tilemaker pmtiles osmium python3 aws curl; do
   command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
 done
 
@@ -54,28 +87,46 @@ export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
 
 # ---------------------------------------------------------------------------
-# Create temp directory with cleanup trap
+# Temp directory with cleanup trap
 # ---------------------------------------------------------------------------
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
-
-log "Region: $REGION_ID"
 log "Temp dir: $TMPDIR"
 
 # ===========================================================================
-# Step 1 — Protomaps (PMTiles)
+# Stage A — Ukraine PBF (download if not provided)
 # ===========================================================================
-log "Step 1: Downloading OSM extract from Geofabrik..."
-OSM_FILE="$TMPDIR/${REGION_ID}-latest.osm.pbf"
-curl -L --fail --progress-bar \
-  -o "$OSM_FILE" \
-  "${GEOFABRIK_BASE}/${REGION_ID}-latest.osm.pbf"
-log "Step 1: Download complete — $(du -h "$OSM_FILE" | cut -f1)"
+if [[ -n "$UKRAINE_PBF" ]]; then
+  [[ -f "$UKRAINE_PBF" ]] || die "--ukraine-pbf path does not exist: $UKRAINE_PBF"
+  log "Using provided Ukraine PBF: $UKRAINE_PBF ($(du -h "$UKRAINE_PBF" | cut -f1))"
+else
+  UKRAINE_PBF="$TMPDIR/ukraine-latest.osm.pbf"
+  log "Downloading Ukraine OSM extract from Geofabrik..."
+  curl -L --fail --progress-bar -o "$UKRAINE_PBF" "$GEOFABRIK_UKRAINE"
+  log "Download complete — $(du -h "$UKRAINE_PBF" | cut -f1)"
+fi
 
-log "Step 1: Converting OSM to MBTiles via tilemaker (minzoom=5, maxzoom=14)..."
+# ===========================================================================
+# Stage B — Extract oblast from Ukraine PBF
+# ===========================================================================
+log "Extracting oblast '$REGION_ID' from Ukraine PBF (bbox: $BBOX)..."
+OSM_FILE="$TMPDIR/${REGION_ID}.osm.pbf"
+osmium extract \
+  --bbox "$BBOX" \
+  --strategy complete-ways \
+  --output "$OSM_FILE" \
+  --overwrite \
+  "$UKRAINE_PBF"
+log "Oblast extract complete — $(du -h "$OSM_FILE" | cut -f1)"
+
+# ===========================================================================
+# Step 1 — PMTiles (tilemaker → MBTiles, pmtiles convert → PMTiles)
+# ===========================================================================
+log "Step 1: Building PMTiles (tilemaker → MBTiles → PMTiles)..."
 MBTILES_FILE="$TMPDIR/${REGION_ID}.mbtiles"
 PMTILES_FILE="$TMPDIR/${REGION_ID}.pmtiles"
 mkdir -p "$TMPDIR/tilemaker-store"
+
 tilemaker \
   --input "$OSM_FILE" \
   --output "$MBTILES_FILE" \
@@ -84,12 +135,11 @@ tilemaker \
   --store "$TMPDIR/tilemaker-store"
 log "Step 1: MBTiles complete — $(du -h "$MBTILES_FILE" | cut -f1)"
 
-log "Step 1: Converting MBTiles → PMTiles..."
 pmtiles convert "$MBTILES_FILE" "$PMTILES_FILE"
 rm -f "$MBTILES_FILE"
 log "Step 1: PMTiles ready — $(du -h "$PMTILES_FILE" | cut -f1)"
 
-log "Step 1: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/maps/${REGION_ID}.pmtiles"
+log "Step 1: Uploading to R2..."
 aws s3 cp "$PMTILES_FILE" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/maps/${REGION_ID}.pmtiles" \
   --endpoint-url "$R2_ENDPOINT_URL"
@@ -98,19 +148,17 @@ log "Step 1: Upload complete"
 # ===========================================================================
 # Step 2 — Geocode SQLite Index
 # ===========================================================================
-log "Step 2: Filtering OSM for named places..."
+log "Step 2: Filtering OSM for named places + addresses..."
 osmium tags-filter "$OSM_FILE" n/name=* \
-  -o "$TMPDIR/${REGION_ID}-named.osm.pbf"
+  -o "$TMPDIR/${REGION_ID}-named.osm.pbf" --overwrite
 
-log "Step 2: Filtering OSM for address tags..."
 osmium tags-filter "$OSM_FILE" n/addr:street=* \
-  -o "$TMPDIR/${REGION_ID}-addr.osm.pbf"
+  -o "$TMPDIR/${REGION_ID}-addr.osm.pbf" --overwrite
 
-log "Step 2: Merging named + address extracts..."
 osmium merge \
   "$TMPDIR/${REGION_ID}-named.osm.pbf" \
   "$TMPDIR/${REGION_ID}-addr.osm.pbf" \
-  -o "$TMPDIR/${REGION_ID}-places.osm.pbf"
+  -o "$TMPDIR/${REGION_ID}-places.osm.pbf" --overwrite
 
 log "Step 2: Building SQLite FTS5 geocode database..."
 python3 "$SCRIPT_DIR/build-geocode-db.py" \
@@ -118,27 +166,24 @@ python3 "$SCRIPT_DIR/build-geocode-db.py" \
   "$TMPDIR/${REGION_ID}.db"
 log "Step 2: Geocode DB complete — $(du -h "$TMPDIR/${REGION_ID}.db" | cut -f1)"
 
-log "Step 2: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/geocode/${REGION_ID}.db"
+log "Step 2: Uploading to R2..."
 aws s3 cp "$TMPDIR/${REGION_ID}.db" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/geocode/${REGION_ID}.db" \
   --endpoint-url "$R2_ENDPOINT_URL"
 log "Step 2: Upload complete"
 
 # ===========================================================================
-# Step 3 — POI Extraction (Speed Cameras + Speed Limits → GeoJSON)
+# Step 3 — POI (speed cameras + speed limits → GeoJSON)
 # ===========================================================================
-# This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
-
 log "Step 3: Filtering OSM for speed cameras..."
 osmium tags-filter "$OSM_FILE" \
-  n/highway=speed_camera \
-  n/enforcement=maxspeed \
-  -o "$TMPDIR/${REGION_ID}-cameras.osm.pbf"
+  n/highway=speed_camera n/enforcement=maxspeed \
+  -o "$TMPDIR/${REGION_ID}-cameras.osm.pbf" --overwrite
 
 log "Step 3: Filtering OSM for speed limits..."
 osmium tags-filter "$OSM_FILE" \
   w/maxspeed=* \
-  -o "$TMPDIR/${REGION_ID}-limits.osm.pbf"
+  -o "$TMPDIR/${REGION_ID}-limits.osm.pbf" --overwrite
 
 log "Step 3: Converting to GeoJSON..."
 python3 "$SCRIPT_DIR/build-poi-json.py" \
@@ -146,25 +191,14 @@ python3 "$SCRIPT_DIR/build-poi-json.py" \
   "$TMPDIR/${REGION_ID}-limits.osm.pbf" \
   "$TMPDIR/${REGION_ID}-cameras.json"
 
-log "Step 3: Validating JSON output..."
-python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$TMPDIR/${REGION_ID}-cameras.json" \
-  || die "Step 3: Invalid JSON output"
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \
+  "$TMPDIR/${REGION_ID}-cameras.json" || die "Step 3: Invalid JSON output"
 log "Step 3: GeoJSON valid — $(du -h "$TMPDIR/${REGION_ID}-cameras.json" | cut -f1)"
 
-log "Step 3: Uploading to R2 — s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-cameras.json"
+log "Step 3: Uploading to R2..."
 aws s3 cp "$TMPDIR/${REGION_ID}-cameras.json" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-cameras.json" \
   --endpoint-url "$R2_ENDPOINT_URL"
 log "Step 3: Upload complete"
 
-# ===========================================================================
-# STEP 4 — VALHALLA ROUTING (V2 — DO NOT UNCOMMENT)
-# ===========================================================================
-# When Valhalla-Mobile (io.github.rallista:valhalla-mobile) reaches production stability:
-# 1. Install valhalla toolchain
-# 2. Run: valhalla_build_tiles -c valhalla.json {id}.osm.pbf
-# 3. Package tiles: tar -czf {id}.valhalla valhalla_tiles/
-# 4. Upload to: regions/{id}/routing/{id}.valhalla
-# 5. Add routing: Asset entry to index.json for this region
-
-log "Done — $REGION_ID Steps 1–3 (pmtiles + geocode + poi) complete"
+log "Done — $REGION_ID (pmtiles + geocode + poi) complete"

@@ -39,7 +39,7 @@ jobs:
   pipeline:
     name: ${{ github.event_name == 'schedule' && 'Weekly full rebuild' || format('{0}{1}', inputs.mode, inputs.region != '' && format(' · {0}', inputs.region) || '') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 360   # 6h ceiling — full rebuild of 26 oblasts can take 2–4h
+    timeout-minutes: 360   # 6h ceiling — full rebuild: ~1.6 GB download + 26 tilemaker passes
 
     steps:
       # -----------------------------------------------------------------------

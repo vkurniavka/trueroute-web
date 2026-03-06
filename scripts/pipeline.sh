@@ -100,7 +100,7 @@ if $DRY_RUN; then
     if [[ -n "$REGION" ]]; then
       log "  STAGE 1 (BUILD):  build-region.sh $REGION"
     else
-      log "  STAGE 1 (BUILD):  build-all-regions.sh (26 regions)"
+      log "  STAGE 1 (BUILD):  build-all-regions.sh (download ukraine-latest.osm.pbf once, extract + build 26 oblasts)"
     fi
   else
     log "  STAGE 1 (BUILD):  SKIPPED"
