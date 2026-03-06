@@ -9,8 +9,8 @@
 ## Project Identity
 
 Next.js 15 website for the TrueRoute navigation app.
-Two purposes: (1) marketing + docs site, (2) regional data package hosting via Cloudflare R2.
-Stack: Next.js 15 · TypeScript strict · Tailwind CSS 4 · MDX · next-intl · Cloudflare Pages · R2.
+Two purposes: (1) marketing + docs site, (2) regional data package hosting via Cloudflare R2 + D1.
+Stack: Next.js 15 · TypeScript strict · Tailwind CSS 4 · MDX · next-intl · Cloudflare Pages · R2 · D1.
 
 ---
 
@@ -38,7 +38,10 @@ Violations of these rules will cause the PR to be rejected automatically.
 - Never import MapLibre at module level — always `dynamic(() => import(...), { ssr: false })`
 - Never install `react-leaflet`, `mapbox-gl`, or any map library other than `maplibre-gl`
 - Never add a new npm dependency without noting it in the PR description with justification
-- Never create a database — all data comes from R2 or static MDX files
+- Never access the D1 database directly via `env.TRUEROUTE_DB` in a Route Handler — always go through `src/lib/db.ts`
+- Never write inline SQL strings — use the query helpers in `src/lib/db.ts`
+- Never expose internal DB row `id` integers in API responses — use `code` or slug fields only
+- Never modify the `[[d1_databases]]` binding name (`TRUEROUTE_DB`) or database name (`trueroute-d1`) without updating all usages
 
 **TypeScript**
 - Never use `any` — define proper types for everything
@@ -46,10 +49,11 @@ Violations of these rules will cause the PR to be rejected automatically.
 - Never export `default` from Route Handlers — only named exports (`GET`, `POST`, etc.)
 
 **Security**
-- Never hardcode R2 credentials, API keys, or secrets anywhere in the codebase
+- Never hardcode R2 credentials, D1 credentials, API keys, or secrets anywhere in the codebase
 - Never commit `.env.local` — add it to `.gitignore` and document variables in `.env.example`
 - Never reference `process.env.CLOUDFLARE_*` directly — use the typed env helper at `src/lib/env.ts`
 - Never make R2 bucket root publicly listable
+- Never run raw DDL (`CREATE TABLE`, `DROP TABLE`, `ALTER TABLE`) from application code — use migration files in `migrations/`
 
 **Content**
 - Never describe a feature that is not in v1 of the TrueRoute app
@@ -94,6 +98,15 @@ Violations of these rules will cause the PR to be rejected automatically.
 - Never instantiate `S3Client` directly in a Route Handler
 - Never call R2 from a Client Component — only from Server Components or Route Handlers
 
+**D1 access**
+- Always use the shared helper: `import { getDb } from '@/lib/db'`
+- Never call `env.TRUEROUTE_DB` directly in a Route Handler — go through `src/lib/db.ts`
+- Always use parameterised queries — never interpolate user input into SQL
+- All schema changes go through numbered migration files in `migrations/` (e.g. `0002_add_column.sql`)
+- Seed scripts live in `scripts/` and must be idempotent (`INSERT OR REPLACE` or equivalent)
+- In Vitest, mock D1 with `{ prepare: vi.fn() }` — never hit a real database in unit tests
+- Return D1 errors as `{ error: 'Data service unavailable', code: 'DB_UNAVAILABLE' }` with status 503
+
 ---
 
 ## Key Files — Know These Before Touching Anything
@@ -101,12 +114,18 @@ Violations of these rules will cause the PR to be rejected automatically.
 | File | Purpose |
 |------|---------|
 | `src/lib/r2.ts` | R2 client — do not re-implement |
+| `src/lib/db.ts` | D1 client helper — do not bypass; all DB access goes through here |
 | `src/lib/env.ts` | Typed env variable access — do not bypass |
 | `src/lib/logger.ts` | Structured logger — use instead of console.log |
 | `src/types/regions.ts` | `RegionIndex`, `Region`, `Asset` types — single source of truth |
-| `src/schemas/regions.schema.ts` | Zod schemas matching the types above |
+| `src/schemas/regions.schema.ts` | Zod schemas for legacy `/api/data/index` response |
+| `src/schemas/countries.schema.ts` | Zod schemas for v2 countries API |
+| `src/schemas/regions-v2.schema.ts` | Zod schemas for v2 regions API |
+| `src/schemas/region-files.schema.ts` | Zod schemas for v2 region files API |
+| `migrations/` | D1 SQL migration files — numbered sequentially, never edited after merge |
+| `scripts/seed-d1.ts` | One-time seed script for D1 — idempotent, safe to re-run |
 | `messages/en.json` | All English UI strings |
-| `wrangler.toml` | Cloudflare config — never modify the `[vars]` or `[[r2_buckets]]` sections |
+| `wrangler.toml` | Cloudflare config — never modify `[vars]` or `[[r2_buckets]]`; `[[d1_databases]]` may be edited only for new bindings |
 | `docs/PRD.md` | Product requirements — check before implementing any feature |
 | `docs/adr/` | Architecture decisions — check before changing any stack choice |
 
@@ -233,8 +252,9 @@ Every PR description must include this checklist, fully checked before requestin
 - [ ] Tested at 375px mobile width
 - [ ] For UI: map cleanup verified (useEffect returns clean up layers/sources)
 - [ ] For API: Zod validation present, cache headers set, errors use standard shape
+- [ ] For API (D1): DB access via `src/lib/db.ts`, parameterised queries, internal IDs not exposed
 - [ ] For content: no v2 features described, screenshot placeholders used correctly
-- [ ] For data: checksums.json regenerated after any R2 upload
+- [ ] For data: checksums.json regenerated after any R2 upload; seed scripts are idempotent
 ```
 
 ---
