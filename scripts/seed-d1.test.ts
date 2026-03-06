@@ -58,8 +58,8 @@ describe('escapeSql', () => {
 describe('generateSeedSql', () => {
   it('produces valid SQL from sample-index.json', () => {
     const sql = generateSeedSql(sampleIndex)
-    expect(sql).toContain('BEGIN TRANSACTION')
-    expect(sql).toContain('COMMIT')
+    expect(sql).not.toContain('BEGIN TRANSACTION')
+    expect(sql).not.toContain('COMMIT')
   })
 
   it('inserts Ukraine country row', () => {
