@@ -1,0 +1,182 @@
+name: Data Pipeline
+
+on:
+  # Manual trigger with mode selection
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode'
+        required: true
+        default: 'reindex-only'
+        type: choice
+        options:
+          - full           # build all 26 regions → R2, regenerate index, seed D1
+          - single-region  # build one region → R2, regenerate index, seed D1
+          - reindex-only   # skip build, regenerate index.json from R2, seed D1
+          - d1-only        # seed D1 from index.json already in R2 (no build, no re-index)
+      region:
+        description: 'Region ID — required when mode=single-region (e.g. lviv)'
+        required: false
+        default: ''
+
+  # Weekly full rebuild every Sunday at 02:00 UTC
+  schedule:
+    - cron: '0 2 * * 0'
+
+concurrency:
+  group: data-pipeline
+  cancel-in-progress: false   # never cancel a running pipeline — data integrity
+
+permissions:
+  contents: read
+
+env:
+  R2_BUCKET_NAME: trueroute-data
+  CDN_BASE_URL: https://data.trueroute.app
+  D1_DATABASE_NAME: trueroute-d1
+
+jobs:
+  pipeline:
+    name: ${{ github.event_name == 'schedule' && 'Weekly full rebuild' || format('{0}{1}', inputs.mode, inputs.region != '' && format(' · {0}', inputs.region) || '') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360   # 6h ceiling — full rebuild of 26 oblasts can take 2–4h
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Node + pnpm (needed for wrangler + tsx from devDeps)
+      # -----------------------------------------------------------------------
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      # -----------------------------------------------------------------------
+      # 3. Install data-pipeline tools (only needed for BUILD stage)
+      # -----------------------------------------------------------------------
+      - name: Install osmium-tool
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y osmium-tool
+
+      - name: Install pmtiles CLI
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
+        run: |
+          PMTILES_VERSION="1.24.1"
+          curl -fsSL \
+            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
+            | tar -xz pmtiles
+          sudo mv pmtiles /usr/local/bin/pmtiles
+          pmtiles version
+
+      # -----------------------------------------------------------------------
+      # 4. Validate inputs
+      # -----------------------------------------------------------------------
+      - name: Validate inputs
+        run: |
+          MODE="${{ github.event_name == 'schedule' && 'full' || inputs.mode }}"
+          REGION="${{ inputs.region }}"
+
+          if [[ "$MODE" == "single-region" && -z "$REGION" ]]; then
+            echo "::error::mode=single-region requires a region input" >&2
+            exit 1
+          fi
+
+          if [[ -n "$REGION" ]]; then
+            KNOWN=$(grep -x "$REGION" scripts/regions.txt || true)
+            if [[ -z "$KNOWN" ]]; then
+              echo "::error::Unknown region '$REGION' — must be one of the IDs in scripts/regions.txt" >&2
+              exit 1
+            fi
+          fi
+
+          echo "MODE=$MODE"
+          echo "REGION=${REGION:-all}"
+
+      # -----------------------------------------------------------------------
+      # 5. Dry-run smoke test (always — catches misconfigured secrets early)
+      # -----------------------------------------------------------------------
+      - name: Pipeline dry-run
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          MODE="${{ github.event_name == 'schedule' && 'full' || inputs.mode }}"
+          REGION="${{ inputs.region }}"
+          ARGS="--dry-run"
+          [[ "$MODE" == "single-region" ]]  && ARGS="$ARGS --region $REGION"
+          [[ "$MODE" == "reindex-only" ]]   && ARGS="$ARGS --skip-build"
+          [[ "$MODE" == "d1-only" ]]        && ARGS="$ARGS --d1-only"
+          bash scripts/pipeline.sh $ARGS
+
+      # -----------------------------------------------------------------------
+      # 6. Run pipeline
+      # -----------------------------------------------------------------------
+      - name: Run pipeline
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          MODE="${{ github.event_name == 'schedule' && 'full' || inputs.mode }}"
+          REGION="${{ inputs.region }}"
+          ARGS=""
+          [[ "$MODE" == "single-region" ]]  && ARGS="$ARGS --region $REGION"
+          [[ "$MODE" == "reindex-only" ]]   && ARGS="$ARGS --skip-build"
+          [[ "$MODE" == "d1-only" ]]        && ARGS="$ARGS --d1-only"
+          bash scripts/pipeline.sh $ARGS
+
+      # -----------------------------------------------------------------------
+      # 7. Validate checksums post-pipeline
+      #    (only when R2 was written to — skip for d1-only)
+      # -----------------------------------------------------------------------
+      - name: Validate R2 checksums
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode != 'd1-only') }}
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: trueroute-data
+          SAMPLE_PER_TYPE: '3'
+        run: bash scripts/validate-checksums.sh
+
+      # -----------------------------------------------------------------------
+      # 8. Summary
+      # -----------------------------------------------------------------------
+      - name: Write job summary
+        if: always()
+        run: |
+          MODE="${{ github.event_name == 'schedule' && 'full (scheduled)' || inputs.mode }}"
+          REGION="${{ inputs.region != '' && inputs.region || 'all' }}"
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Data Pipeline — ${{ job.status }}
+
+          | | |
+          |---|---|
+          | **Mode** | \`$MODE\` |
+          | **Region** | \`$REGION\` |
+          | **Triggered by** | ${{ github.event_name == 'schedule' && 'Weekly schedule' || github.actor }} |
+          | **Run** | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+
+          ### Secrets required
+          Make sure these are set in **Settings → Secrets → Actions**:
+          - \`R2_ENDPOINT_URL\`
+          - \`R2_ACCESS_KEY_ID\`
+          - \`R2_SECRET_ACCESS_KEY\`
+          - \`CLOUDFLARE_API_TOKEN\` (needs D1 write permission)
+          EOF
