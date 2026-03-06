@@ -66,11 +66,13 @@ jobs:
       # -----------------------------------------------------------------------
       # 3. Install data-pipeline tools (only needed for BUILD stage)
       # -----------------------------------------------------------------------
-      - name: Install osmium-tool
+      - name: Install osmium-tool + Python osmium binding
         if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y osmium-tool
+          # Python osmium binding (used by build-geocode-db.py and build-poi-json.py)
+          pip install osmium
 
       - name: Install pmtiles CLI
         if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
