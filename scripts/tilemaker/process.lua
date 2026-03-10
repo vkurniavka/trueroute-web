@@ -5,8 +5,8 @@
 -- Tag keys that trigger processing (tilemaker uses these to filter input)
 -- ============================================================================
 
-node_keys    = { "place", "natural", "amenity", "addr:housenumber" }
-way_keys     = { "highway", "waterway", "natural", "landuse", "building", "boundary", "railway" }
+node_keys    = { "place", "natural", "amenity", "addr:housenumber", "shop" }
+way_keys     = { "highway", "waterway", "natural", "landuse", "building", "boundary", "railway", "amenity" }
 relation_keys= { "boundary", "type" }
 
 -- ============================================================================
@@ -64,6 +64,25 @@ local highway_class = {
 }
 
 -- ============================================================================
+-- POI classification: amenity/shop tag → { class, minzoom }
+-- ============================================================================
+local poi_amenity = {
+  fuel             = { class = "fuel",         minzoom = 12 },
+  hospital         = { class = "hospital",     minzoom = 11 },
+  pharmacy         = { class = "pharmacy",     minzoom = 13 },
+  parking          = { class = "parking",      minzoom = 14 },
+  atm              = { class = "atm",          minzoom = 14 },
+  bank             = { class = "atm",          minzoom = 14 },
+  police           = { class = "police",       minzoom = 12 },
+  car_wash         = { class = "car_wash",     minzoom = 14 },
+  charging_station = { class = "ev_charging",  minzoom = 13 },
+}
+
+local poi_shop = {
+  supermarket      = { class = "supermarket",  minzoom = 13 },
+}
+
+-- ============================================================================
 -- Place rank (lower = more important = shown at lower zooms)
 -- ============================================================================
 local place_rank = {
@@ -104,6 +123,24 @@ function node_function(node)
     local street = node:Find("addr:street")
     if street ~= "" then node:Attribute("street", street) end
     node:MinZoom(14)
+    return
+  end
+
+  -- POI nodes (amenity and shop tags)
+  local amenity = node:Find("amenity")
+  local poi = poi_amenity[amenity]
+  if not poi then
+    local shop = node:Find("shop")
+    poi = poi_shop[shop]
+  end
+  if poi then
+    node:Layer("poi", false)
+    node:Attribute("class", poi.class)
+    local name = node:Find("name")
+    if name ~= "" then node:Attribute("name", name) end
+    local name_uk = node:Find("name:uk")
+    if name_uk ~= "" then node:Attribute("name:uk", name_uk) end
+    node:MinZoom(poi.minzoom)
     return
   end
 end
@@ -227,6 +264,20 @@ function way_function(way)
     way:Attribute("class", "forest")
     way:MinZoom(10)
     return
+  end
+
+  -- POI ways (amenity=parking, amenity=fuel etc. mapped as areas)
+  local amenity = way:Find("amenity")
+  local poi = poi_amenity[amenity]
+  if poi then
+    way:LayerAsCentroid("poi")
+    way:Attribute("class", poi.class)
+    local name = way:Find("name")
+    if name ~= "" then way:Attribute("name", name) end
+    local name_uk = way:Find("name:uk")
+    if name_uk ~= "" then way:Attribute("name:uk", name_uk) end
+    way:MinZoom(poi.minzoom)
+    -- Don't return — building/landuse processing may also apply
   end
 
   -- Buildings
