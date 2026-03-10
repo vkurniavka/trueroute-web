@@ -154,11 +154,12 @@ log "Step 1: Upload complete"
 # ===========================================================================
 # Step 2 — Geocode SQLite Index
 # ===========================================================================
-log "Step 2: Filtering OSM for named places + addresses..."
+log "Step 2: Filtering OSM for named places + addresses (nodes + ways)..."
 osmium tags-filter "$OSM_FILE" n/name=* \
   -o "$TMPDIR/${REGION_ID}-named.osm.pbf" --overwrite
 
-osmium tags-filter "$OSM_FILE" n/addr:street=* \
+osmium tags-filter "$OSM_FILE" n/addr:street=* n/addr:housenumber=* \
+  w/addr:housenumber=* \
   -o "$TMPDIR/${REGION_ID}-addr.osm.pbf" --overwrite
 
 osmium merge \
