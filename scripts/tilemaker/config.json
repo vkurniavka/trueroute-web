@@ -38,6 +38,10 @@
     "addr": {
       "minzoom": 14,
       "maxzoom": 15
+    },
+    "poi": {
+      "minzoom": 11,
+      "maxzoom": 15
     }
   },
   "settings": {
