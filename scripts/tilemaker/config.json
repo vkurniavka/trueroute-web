@@ -42,6 +42,10 @@
     "poi": {
       "minzoom": 11,
       "maxzoom": 15
+    },
+    "restriction": {
+      "minzoom": 12,
+      "maxzoom": 15
     }
   },
   "settings": {
