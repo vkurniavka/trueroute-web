@@ -35,7 +35,7 @@ metadata/checksums.json        ← SHA256 per file for integrity verification
 ```bash
 # Install: https://github.com/protomaps/go-pmtiles
 pmtiles convert {input}.osm.pbf {id}.pmtiles \
-  --maxzoom=14 \
+  --maxzoom=15 \
   --attribution="© OpenStreetMap contributors"
 
 # Upload to R2
@@ -44,7 +44,7 @@ aws s3 cp {id}.pmtiles \
   --endpoint-url $R2_ENDPOINT_URL
 ```
 
-- Max zoom 14 — sufficient for navigation, keeps file size manageable
+- Max zoom 15 — street-level detail for turn-by-turn navigation
 - Min zoom 5 — shows oblast-level context
 - Attribution is required by OSM license
 

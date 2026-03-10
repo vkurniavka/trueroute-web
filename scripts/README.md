@@ -118,7 +118,7 @@ To resume from a specific region, run individual regions manually:
 ### Step 1 — Protomaps (PMTiles)
 
 1. Downloads the `.osm.pbf` extract from Geofabrik for the given region
-2. Converts to `.pmtiles` with `pmtiles convert` (minzoom=5, maxzoom=14)
+2. Converts to `.pmtiles` with `pmtiles convert` (minzoom=5, maxzoom=15)
 3. Uploads to R2 at `regions/{id}/maps/{id}.pmtiles`
 
 ### Step 2 — Geocode SQLite Index

@@ -2,44 +2,44 @@
   "layers": {
     "transportation": {
       "minzoom": 7,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "transportation_name": {
       "minzoom": 10,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "place": {
       "minzoom": 4,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "water": {
       "minzoom": 4,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "waterway": {
       "minzoom": 9,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "boundary": {
       "minzoom": 2,
-      "maxzoom": 14,
+      "maxzoom": 15,
       "simplify_below": 12,
       "simplify_level": 0.0003,
       "simplify_ratio": 2
     },
     "building": {
       "minzoom": 13,
-      "maxzoom": 14
+      "maxzoom": 15
     },
     "landuse": {
       "minzoom": 10,
-      "maxzoom": 14
+      "maxzoom": 15
     }
   },
   "settings": {
     "minzoom": 5,
-    "maxzoom": 14,
-    "basezoom": 14,
+    "maxzoom": 15,
+    "basezoom": 15,
     "include_ids": false,
     "compress": "gzip",
     "mvt_version": 2,
