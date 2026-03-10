@@ -3,7 +3,7 @@
 build-geocode-db.py — Convert OSM PBF to SQLite FTS5 geocode database.
 
 Extracts named places (nodes) and building addresses (nodes + way centroids)
-from OSM data and builds a full-text search index.
+from OSM data and builds a full-text search index with proximity support.
 
 Usage: python3 build-geocode-db.py <input.osm.pbf> <output.db>
 
@@ -11,6 +11,7 @@ Requires: pip install osmium
 """
 
 import os
+import re
 import sqlite3
 import sys
 
@@ -18,6 +19,53 @@ import osmium
 
 
 PLACE_TYPES = frozenset({"city", "town", "village", "hamlet", "suburb", "neighbourhood"})
+
+# Ukrainian street name abbreviation normalization pairs
+# Each pair: (abbreviated form, full form)
+UA_STREET_ABBREVS = [
+    ("вул.", "вулиця"),
+    ("пр.", "проспект"),
+    ("пров.", "провулок"),
+    ("б-р", "бульвар"),
+    ("пл.", "площа"),
+]
+
+
+def build_display_name(addr_street, addr_housenumber, city):
+    """Build a full display name from address components.
+
+    Example: 'вул. Шевченка 15, Львів'
+    """
+    parts = []
+    if addr_street:
+        if addr_housenumber:
+            parts.append(f"{addr_street} {addr_housenumber}")
+        else:
+            parts.append(addr_street)
+    if city:
+        parts.append(city)
+    return ", ".join(parts)
+
+
+def normalize_street_name(name):
+    """Expand Ukrainian street abbreviations for better FTS matching.
+
+    Returns the original name plus expanded forms joined by space,
+    so FTS5 matches both abbreviated and full forms.
+    """
+    if not name:
+        return ""
+
+    expanded = name
+    for abbrev, full in UA_STREET_ABBREVS:
+        # Replace abbreviation with full form (case-insensitive)
+        pattern = re.escape(abbrev)
+        if re.search(pattern, expanded, re.IGNORECASE):
+            expanded = re.sub(pattern, full, expanded, flags=re.IGNORECASE)
+            # Return both forms so either matches
+            return f"{name} {expanded}"
+
+    return name
 
 
 class PlaceHandler(osmium.SimpleHandler):
@@ -57,10 +105,12 @@ class PlaceHandler(osmium.SimpleHandler):
         else:
             place_type = "place"
 
+        display_name = build_display_name(addr_street, addr_housenumber, city) if addr_street else name
         osm_id = f"n{n.id}"
 
         self.places.append(
-            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, place_type)
+            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, place_type)
         )
 
     def way(self, w):
@@ -90,11 +140,13 @@ class PlaceHandler(osmium.SimpleHandler):
         name_uk = tags.get("name:uk", "")
         name_en = tags.get("name:en", "")
         city = tags.get("addr:city", "")
+        display_name = build_display_name(addr_street, addr_housenumber, city)
 
         osm_id = f"w{w.id}"
 
         self.places.append(
-            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, "address")
+            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, "address")
         )
 
 
@@ -117,6 +169,7 @@ def build_db(input_path, output_path):
             addr_street TEXT,
             addr_housenumber TEXT,
             city TEXT,
+            display_name TEXT,
             lat REAL,
             lng REAL,
             type TEXT
@@ -128,24 +181,41 @@ def build_db(input_path, output_path):
             name,
             name_uk,
             name_en,
+            display_name,
             content='places',
             content_rowid='rowid'
         )"""
     )
 
+    # R-tree spatial index for proximity / bounding-box queries
+    cur.execute(
+        """CREATE VIRTUAL TABLE places_spatial USING rtree(
+            id,
+            min_lat, max_lat,
+            min_lng, max_lng
+        )"""
+    )
+
     cur.executemany(
         """INSERT INTO places
-            (id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, type)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (id, name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         handler.places,
     )
 
     cur.execute("INSERT INTO places_fts(places_fts) VALUES ('rebuild')")
 
+    # Populate R-tree with point entries (min=max for point data)
+    cur.execute(
+        """INSERT INTO places_spatial (id, min_lat, max_lat, min_lng, max_lng)
+           SELECT rowid, lat, lat, lng, lng FROM places"""
+    )
+
     conn.commit()
     conn.close()
 
-    addr_count = sum(1 for p in handler.places if p[9] == "address")
+    addr_count = sum(1 for p in handler.places if p[10] == "address")
     print(f"Inserted {len(handler.places)} places ({addr_count} addresses from nodes+ways)")
 
 
