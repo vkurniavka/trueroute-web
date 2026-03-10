@@ -2,6 +2,9 @@
 """
 build-geocode-db.py — Convert OSM PBF to SQLite FTS5 geocode database.
 
+Extracts named places (nodes) and building addresses (nodes + way centroids)
+from OSM data and builds a full-text search index.
+
 Usage: python3 build-geocode-db.py <input.osm.pbf> <output.db>
 
 Requires: pip install osmium
@@ -18,7 +21,7 @@ PLACE_TYPES = frozenset({"city", "town", "village", "hamlet", "suburb", "neighbo
 
 
 class PlaceHandler(osmium.SimpleHandler):
-    """Extract named places and addresses from OSM nodes."""
+    """Extract named places and addresses from OSM nodes and ways."""
 
     def __init__(self):
         super().__init__()
@@ -29,6 +32,7 @@ class PlaceHandler(osmium.SimpleHandler):
 
         name = tags.get("name", "")
         addr_street = tags.get("addr:street", "")
+        addr_housenumber = tags.get("addr:housenumber", "")
 
         if not name and not addr_street:
             return
@@ -37,10 +41,15 @@ class PlaceHandler(osmium.SimpleHandler):
         name_en = tags.get("name:en", "")
         lat = n.location.lat
         lng = n.location.lon
+        city = tags.get("addr:city", "")
 
         place_tag = tags.get("place", "")
         if place_tag in PLACE_TYPES:
             place_type = place_tag
+        elif addr_housenumber and addr_street:
+            place_type = "address"
+            if not name:
+                name = f"{addr_street} {addr_housenumber}"
         elif addr_street:
             place_type = "street"
             if not name:
@@ -50,7 +59,43 @@ class PlaceHandler(osmium.SimpleHandler):
 
         osm_id = f"n{n.id}"
 
-        self.places.append((osm_id, name, name_uk, name_en, lat, lng, place_type))
+        self.places.append(
+            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, place_type)
+        )
+
+    def way(self, w):
+        tags = {t.k: t.v for t in w.tags}
+
+        addr_housenumber = tags.get("addr:housenumber", "")
+        addr_street = tags.get("addr:street", "")
+
+        if not addr_housenumber or not addr_street:
+            return
+
+        # Compute centroid of the way
+        lats = []
+        lons = []
+        for node in w.nodes:
+            if node.location.valid():
+                lats.append(node.location.lat)
+                lons.append(node.location.lon)
+
+        if not lats:
+            return
+
+        lat = sum(lats) / len(lats)
+        lng = sum(lons) / len(lons)
+
+        name = f"{addr_street} {addr_housenumber}"
+        name_uk = tags.get("name:uk", "")
+        name_en = tags.get("name:en", "")
+        city = tags.get("addr:city", "")
+
+        osm_id = f"w{w.id}"
+
+        self.places.append(
+            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, "address")
+        )
 
 
 def build_db(input_path, output_path):
@@ -69,6 +114,9 @@ def build_db(input_path, output_path):
             name TEXT,
             name_uk TEXT,
             name_en TEXT,
+            addr_street TEXT,
+            addr_housenumber TEXT,
+            city TEXT,
             lat REAL,
             lng REAL,
             type TEXT
@@ -86,7 +134,9 @@ def build_db(input_path, output_path):
     )
 
     cur.executemany(
-        "INSERT INTO places (id, name, name_uk, name_en, lat, lng, type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        """INSERT INTO places
+            (id, name, name_uk, name_en, addr_street, addr_housenumber, city, lat, lng, type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         handler.places,
     )
 
@@ -95,7 +145,8 @@ def build_db(input_path, output_path):
     conn.commit()
     conn.close()
 
-    print(f"Inserted {len(handler.places)} places")
+    addr_count = sum(1 for p in handler.places if p[9] == "address")
+    print(f"Inserted {len(handler.places)} places ({addr_count} addresses from nodes+ways)")
 
 
 if __name__ == "__main__":

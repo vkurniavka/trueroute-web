@@ -123,13 +123,13 @@ To resume from a specific region, run individual regions manually:
 
 ### Step 2 — Geocode SQLite Index
 
-1. Filters OSM data for named places (`n/name=*`) and addresses (`n/addr:street=*`) using `osmium tags-filter`
+1. Filters OSM data for named places (`n/name=*`) and addresses (`n/addr:street=*`, `n/addr:housenumber=*`, `w/addr:housenumber=*`) using `osmium tags-filter`
 2. Merges both extracts with `osmium merge`
-3. Runs `build-geocode-db.py` to parse nodes and build a SQLite FTS5 database
+3. Runs `build-geocode-db.py` to parse nodes and building way centroids, building a SQLite FTS5 database
 4. Database schema:
-   - `places` table: `id`, `name`, `name_uk`, `name_en`, `lat`, `lng`, `type`
+   - `places` table: `id`, `name`, `name_uk`, `name_en`, `addr_street`, `addr_housenumber`, `city`, `lat`, `lng`, `type`
    - `places_fts` virtual table: FTS5 index on `name`, `name_uk`, `name_en`
-5. Place types: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `street`
+5. Place types: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `street`, `address`
 6. Uploads to R2 at `regions/{id}/geocode/{id}.db`
 
 ### Step 3 — POI Extraction (Speed Cameras + Speed Limits)
