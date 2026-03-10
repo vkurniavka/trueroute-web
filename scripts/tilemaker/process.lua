@@ -101,13 +101,13 @@ function way_function(way)
     elseif class == "primary" then minz = 9
     elseif class == "secondary" then minz = 10
     elseif class == "tertiary" then minz = 11
-    elseif class == "minor" then minz = 12
+    elseif class == "minor" then minz = 11
     end
     way:MinZoom(minz)
 
     -- Transportation name layer
     local name = way:Find("name")
-    if name ~= "" and minz <= 12 then
+    if name ~= "" and minz <= 13 then
       way:Layer("transportation_name", false)
       way:Attribute("class", class)
       way:Attribute("name", name)
