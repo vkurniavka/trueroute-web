@@ -5,7 +5,7 @@
 -- Tag keys that trigger processing (tilemaker uses these to filter input)
 -- ============================================================================
 
-node_keys    = { "place", "natural", "amenity" }
+node_keys    = { "place", "natural", "amenity", "addr:housenumber" }
 way_keys     = { "highway", "waterway", "natural", "landuse", "building", "boundary", "railway" }
 relation_keys= { "boundary", "type" }
 
@@ -93,6 +93,17 @@ function node_function(node)
       node:AttributeNumeric("rank", rank)
       node:MinZoom(math.max(4, rank + 3))
     end
+    return
+  end
+
+  -- Address points (addr:housenumber nodes)
+  local housenumber = node:Find("addr:housenumber")
+  if housenumber ~= "" then
+    node:Layer("addr", false)
+    node:Attribute("housenumber", housenumber)
+    local street = node:Find("addr:street")
+    if street ~= "" then node:Attribute("street", street) end
+    node:MinZoom(14)
     return
   end
 end
@@ -222,6 +233,16 @@ function way_function(way)
   if building ~= "" then
     way:Layer("building", true)
     way:MinZoom(13)
+
+    -- Building address centroids (way polygons with addr:housenumber)
+    local housenumber = way:Find("addr:housenumber")
+    if housenumber ~= "" then
+      way:LayerAsCentroid("addr")
+      way:Attribute("housenumber", housenumber)
+      local street = way:Find("addr:street")
+      if street ~= "" then way:Attribute("street", street) end
+      way:MinZoom(14)
+    end
     return
   end
 

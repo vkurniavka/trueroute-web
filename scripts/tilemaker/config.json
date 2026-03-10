@@ -34,6 +34,10 @@
     "landuse": {
       "minzoom": 10,
       "maxzoom": 15
+    },
+    "addr": {
+      "minzoom": 14,
+      "maxzoom": 15
     }
   },
   "settings": {
