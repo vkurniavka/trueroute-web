@@ -10,6 +10,33 @@ way_keys     = { "highway", "waterway", "natural", "landuse", "building", "bound
 relation_keys= { "boundary", "type" }
 
 -- ============================================================================
+-- Maxspeed normalization (OSM string → integer km/h or nil)
+-- ============================================================================
+local function normalize_maxspeed(raw)
+  if raw == "" then return nil end
+  -- Plain integer
+  local num = tonumber(raw)
+  if num then return math.floor(num) end
+  -- "XX mph"
+  local mph = raw:match("^(%d+)%s*mph$")
+  if mph then return math.floor(tonumber(mph) * 1.609) end
+  -- "XX km/h"
+  local kmh = raw:match("^(%d+)%s*km/?h$")
+  if kmh then return math.floor(tonumber(kmh)) end
+  -- Country defaults like "UA:urban" — not numeric
+  return nil
+end
+
+-- ============================================================================
+-- Oneway normalization (OSM string → 1 / -1 / 0)
+-- ============================================================================
+local function normalize_oneway(raw)
+  if raw == "yes" or raw == "true" or raw == "1" then return 1
+  elseif raw == "-1" or raw == "reverse" then return -1
+  else return 0 end
+end
+
+-- ============================================================================
 -- Highway class mapping (OSM highway tag → navigation class)
 -- ============================================================================
 local highway_class = {
@@ -90,10 +117,30 @@ function way_function(way)
     -- Transportation layer (geometry)
     way:Layer("transportation", false)
     way:Attribute("class", class)
-    way:Attribute("oneway", way:Find("oneway"))
-    way:Attribute("maxspeed", way:Find("maxspeed"))
     way:Attribute("surface", way:Find("surface"))
     way:Attribute("access", way:Find("access"))
+
+    -- Road reference number (M-06, N-01, E-40)
+    local ref = way:Find("ref")
+    if ref ~= "" then way:Attribute("ref", ref) end
+
+    -- Lane count
+    local lanes = tonumber(way:Find("lanes"))
+    if lanes then way:AttributeNumeric("lanes", lanes) end
+
+    -- Bridge and tunnel flags
+    if way:Find("bridge") == "yes" then way:Attribute("bridge", "1") end
+    if way:Find("tunnel") == "yes" then way:Attribute("tunnel", "1") end
+
+    -- Street lighting
+    if way:Find("lit") == "yes" then way:Attribute("lit", "1") end
+
+    -- Normalized oneway: 1 (forward), -1 (reverse), 0 (both)
+    way:AttributeNumeric("oneway", normalize_oneway(way:Find("oneway")))
+
+    -- Normalized maxspeed (integer km/h or omitted)
+    local maxspeed = normalize_maxspeed(way:Find("maxspeed"))
+    if maxspeed then way:AttributeNumeric("maxspeed", maxspeed) end
 
     -- Min zoom by road class
     local minz = 14
