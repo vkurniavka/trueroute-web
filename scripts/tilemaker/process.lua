@@ -310,22 +310,59 @@ function way_function(way)
 end
 
 -- ============================================================================
--- Relation processing (administrative boundaries only)
+-- Valid turn restriction types
+-- ============================================================================
+local valid_restrictions = {
+  no_left_turn     = true,
+  no_right_turn    = true,
+  no_u_turn        = true,
+  no_straight_on   = true,
+  only_straight_on = true,
+  only_right_turn  = true,
+  only_left_turn   = true,
+}
+
+-- ============================================================================
+-- Relation processing (administrative boundaries + turn restrictions)
 -- ============================================================================
 function relation_scan_function(relation)
-  if relation:Find("type") == "boundary" and relation:Find("boundary") == "administrative" then
+  local rtype = relation:Find("type")
+  if rtype == "boundary" and relation:Find("boundary") == "administrative" then
+    return true
+  end
+  if rtype == "restriction" then
     return true
   end
   return false
 end
 
 function relation_function(relation)
-  local admin_level = tonumber(relation:Find("admin_level")) or 99
-  if admin_level <= 8 then
-    relation:Layer("boundary", false)
-    relation:AttributeNumeric("admin_level", admin_level)
-    relation:Attribute("name", relation:Find("name"))
-    relation:Attribute("name:uk", relation:Find("name:uk"))
-    relation:MinZoom(admin_level <= 4 and 5 or admin_level <= 6 and 8 or 10)
+  local rtype = relation:Find("type")
+
+  -- Administrative boundaries
+  if rtype == "boundary" then
+    local admin_level = tonumber(relation:Find("admin_level")) or 99
+    if admin_level <= 8 then
+      relation:Layer("boundary", false)
+      relation:AttributeNumeric("admin_level", admin_level)
+      relation:Attribute("name", relation:Find("name"))
+      relation:Attribute("name:uk", relation:Find("name:uk"))
+      relation:MinZoom(admin_level <= 4 and 5 or admin_level <= 6 and 8 or 10)
+    end
+    return
+  end
+
+  -- Turn restrictions (type=restriction)
+  if rtype == "restriction" then
+    local restriction = relation:Find("restriction")
+    if restriction ~= "" and valid_restrictions[restriction] then
+      relation:Layer("restriction", false)
+      relation:Attribute("restriction", restriction)
+      -- except tag allows specific vehicle type exceptions
+      local except = relation:Find("except")
+      if except ~= "" then relation:Attribute("except", except) end
+      relation:MinZoom(12)
+    end
+    return
   end
 end
