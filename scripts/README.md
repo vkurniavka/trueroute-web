@@ -132,18 +132,19 @@ To resume from a specific region, run individual regions manually:
 5. Place types: `city`, `town`, `village`, `hamlet`, `suburb`, `neighbourhood`, `street`, `address`
 6. Uploads to R2 at `regions/{id}/geocode/{id}.db`
 
-### Step 3 — POI Extraction (Speed Cameras + Speed Limits)
+### Step 3 — POI Extraction (Safety + Navigation)
 
 > **Note:** This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
 
-1. Filters OSM data for speed cameras (`n/highway=speed_camera`, `n/enforcement=maxspeed`) using `osmium tags-filter`
-2. Filters OSM data for speed limit ways (`w/maxspeed=*`) using `osmium tags-filter`
-3. Runs `build-poi-json.py` to convert both extracts to a single GeoJSON FeatureCollection
-4. Speed camera features: Point geometry at node location with `maxspeed` (km/h or null) and `direction` (degrees or null)
-5. Speed limit features: Point geometry at midpoint of first way segment with `maxspeed` (normalized to km/h) and `highway` type
-6. Maxspeed normalization: plain numbers treated as km/h, `"XX mph"` converted to km/h, country defaults (e.g. `"RU:urban"`) become null
-7. Validates output is valid JSON
-8. Uploads to R2 at `regions/{id}/poi/{id}-cameras.json`
+1. Runs `build-poi-json.py` on the region PBF to produce two GeoJSON files:
+   - **Safety POIs** (`{id}-cameras.json`): Speed cameras + railroad crossings
+   - **Navigation POIs** (`{id}-nav-poi.json`): Fuel, hospital/clinic, pharmacy, parking
+2. Speed camera features: Point geometry at node location with `maxspeed` (km/h or null), `direction` (degrees or null), `camera_type`
+3. Railroad crossing features: Point geometry at level crossing nodes
+4. Navigation POI features: Point geometry (node or way centroid) with `name`, `name_uk`, `brand` (fuel)
+5. Speed limit midpoints removed — maxspeed data now lives in the PMTiles transportation layer
+6. Validates both output files are valid JSON
+7. Uploads both to R2 at `regions/{id}/poi/{id}-cameras.json` and `regions/{id}/poi/{id}-nav-poi.json`
 
 Step 4 (Valhalla routing) is a v2 feature — commented out.
 

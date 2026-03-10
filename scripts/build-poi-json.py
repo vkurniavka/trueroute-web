@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
-build-poi-json.py — Convert OSM speed camera and speed limit PBF extracts to GeoJSON.
+build-poi-json.py — Extract safety and navigation POIs from OSM PBF to GeoJSON.
 
 This data is for the TrueRoute mobile app ONLY — it is NOT rendered on the website.
 
+Produces two output files:
+  - {id}-cameras.json: Speed cameras + railroad crossings (safety POIs)
+  - {id}-nav-poi.json: Fuel, hospital, pharmacy, parking (navigation POIs)
+
 Usage:
-    python3 build-poi-json.py cameras.osm.pbf limits.osm.pbf output.json
+    python3 build-poi-json.py <region.osm.pbf> <safety-output.json> <nav-output.json>
 
 Requires: osmium (pip install osmium)
 """
 
 import json
-import math
 import re
 import sys
 
@@ -59,8 +62,8 @@ def parse_direction(value):
         return None
 
 
-class CameraHandler(osmium.SimpleHandler):
-    """Extracts speed camera nodes from an OSM PBF file."""
+class SafetyPOIHandler(osmium.SimpleHandler):
+    """Extracts safety-related POIs: speed cameras and railroad crossings."""
 
     def __init__(self):
         super().__init__()
@@ -70,11 +73,91 @@ class CameraHandler(osmium.SimpleHandler):
         if not n.location.valid():
             return
 
-        props = {
-            "type": "speed_camera",
-            "maxspeed": parse_maxspeed(n.tags.get("maxspeed")),
-            "direction": parse_direction(n.tags.get("direction")),
+        tags = {t.k: t.v for t in n.tags}
+
+        # Speed cameras
+        highway = tags.get("highway", "")
+        enforcement = tags.get("enforcement", "")
+        if highway == "speed_camera" or enforcement == "maxspeed":
+            props = {
+                "type": "speed_camera",
+                "maxspeed": parse_maxspeed(tags.get("maxspeed")),
+                "direction": parse_direction(tags.get("direction")),
+            }
+            camera_type = tags.get("camera:type")
+            if camera_type:
+                props["camera_type"] = camera_type
+            self.features.append(self._make_feature(n, props))
+            return
+
+        # Railroad crossings
+        railway = tags.get("railway", "")
+        if railway == "level_crossing":
+            props = {
+                "type": "railroad_crossing",
+            }
+            self.features.append(self._make_feature(n, props))
+            return
+
+    @staticmethod
+    def _make_feature(n, props):
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [n.location.lon, n.location.lat],
+            },
+            "properties": props,
         }
+
+
+class NavigationPOIHandler(osmium.SimpleHandler):
+    """Extracts navigation POIs: fuel, hospital, pharmacy, parking."""
+
+    # amenity tag → POI type
+    AMENITY_MAP = {
+        "fuel": "fuel",
+        "hospital": "hospital",
+        "clinic": "hospital",
+        "pharmacy": "pharmacy",
+        "parking": "parking",
+    }
+
+    def __init__(self):
+        super().__init__()
+        self.features = []
+
+    def node(self, n):
+        if not n.location.valid():
+            return
+
+        tags = {t.k: t.v for t in n.tags}
+        amenity = tags.get("amenity", "")
+        poi_type = self.AMENITY_MAP.get(amenity)
+        if not poi_type:
+            return
+
+        props = {
+            "type": poi_type,
+        }
+        name = tags.get("name")
+        if name:
+            props["name"] = name
+        name_uk = tags.get("name:uk")
+        if name_uk:
+            props["name_uk"] = name_uk
+
+        # Fuel-specific: brand and fuel types
+        if poi_type == "fuel":
+            brand = tags.get("brand")
+            if brand:
+                props["brand"] = brand
+
+        # Hospital: emergency tag
+        if poi_type == "hospital":
+            emergency = tags.get("emergency")
+            if emergency:
+                props["emergency"] = emergency
 
         self.features.append({
             "type": "Feature",
@@ -85,85 +168,93 @@ class CameraHandler(osmium.SimpleHandler):
             "properties": props,
         })
 
-
-class SpeedLimitHandler(osmium.SimpleHandler):
-    """Extracts speed limit ways from an OSM PBF file.
-
-    Represents each way as a Point at the midpoint of its first segment.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.features = []
-
     def way(self, w):
-        maxspeed = parse_maxspeed(w.tags.get("maxspeed"))
-        if maxspeed is None:
+        """Handle area features (parking lots, hospitals mapped as buildings)."""
+        tags = {t.k: t.v for t in w.tags}
+        amenity = tags.get("amenity", "")
+        poi_type = self.AMENITY_MAP.get(amenity)
+        if not poi_type:
             return
 
-        # Compute midpoint of the first segment (first two nodes)
-        nodes = list(w.nodes)
-        if len(nodes) < 2:
+        # Compute centroid
+        lats = []
+        lons = []
+        for node in w.nodes:
+            if node.location.valid():
+                lats.append(node.location.lat)
+                lons.append(node.location.lon)
+
+        if not lats:
             return
 
-        n0 = nodes[0]
-        n1 = nodes[1]
-
-        if not n0.location.valid() or not n1.location.valid():
-            return
-
-        mid_lon = (n0.location.lon + n1.location.lon) / 2.0
-        mid_lat = (n0.location.lat + n1.location.lat) / 2.0
+        lat = sum(lats) / len(lats)
+        lng = sum(lons) / len(lons)
 
         props = {
-            "type": "speed_limit",
-            "maxspeed": maxspeed,
-            "highway": w.tags.get("highway"),
+            "type": poi_type,
         }
+        name = tags.get("name")
+        if name:
+            props["name"] = name
+        name_uk = tags.get("name:uk")
+        if name_uk:
+            props["name_uk"] = name_uk
+
+        if poi_type == "fuel":
+            brand = tags.get("brand")
+            if brand:
+                props["brand"] = brand
 
         self.features.append({
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [mid_lon, mid_lat],
+                "coordinates": [lng, lat],
             },
             "properties": props,
         })
 
 
+def write_geojson(features, output_path):
+    """Write a GeoJSON FeatureCollection to file."""
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features,
+    }
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(geojson, f, ensure_ascii=False)
+
+
 def main():
     if len(sys.argv) != 4:
         print(
-            "Usage: python3 build-poi-json.py <cameras.osm.pbf> <limits.osm.pbf> <output.json>",
+            "Usage: python3 build-poi-json.py <region.osm.pbf> <safety-output.json> <nav-output.json>",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    cameras_pbf = sys.argv[1]
-    limits_pbf = sys.argv[2]
-    output_path = sys.argv[3]
+    region_pbf = sys.argv[1]
+    safety_output = sys.argv[2]
+    nav_output = sys.argv[3]
 
-    # Extract speed cameras
-    camera_handler = CameraHandler()
-    camera_handler.apply_file(cameras_pbf)
+    # Extract safety POIs (cameras + railroad crossings)
+    safety_handler = SafetyPOIHandler()
+    safety_handler.apply_file(region_pbf)
 
-    # Extract speed limits (need node locations for way midpoints)
-    limit_handler = SpeedLimitHandler()
-    limit_handler.apply_file(limits_pbf, locations=True)
+    # Extract navigation POIs (fuel, hospital, pharmacy, parking)
+    nav_handler = NavigationPOIHandler()
+    nav_handler.apply_file(region_pbf, locations=True)
 
-    all_features = camera_handler.features + limit_handler.features
-
-    geojson = {
-        "type": "FeatureCollection",
-        "features": all_features,
-    }
-
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(geojson, f, ensure_ascii=False)
+    write_geojson(safety_handler.features, safety_output)
+    write_geojson(nav_handler.features, nav_output)
 
     print(
-        f"{len(camera_handler.features)} cameras, "
-        f"{len(limit_handler.features)} speed limit segments written"
+        f"Safety: {len(safety_handler.features)} features "
+        f"(cameras + railroad crossings)"
+    )
+    print(
+        f"Navigation: {len(nav_handler.features)} features "
+        f"(fuel, hospital, pharmacy, parking)"
     )
 
 

@@ -180,31 +180,28 @@ aws s3 cp "$TMPDIR/${REGION_ID}.db" \
 log "Step 2: Upload complete"
 
 # ===========================================================================
-# Step 3 — POI (speed cameras + speed limits → GeoJSON)
+# Step 3 — POI (safety + navigation GeoJSON)
 # ===========================================================================
-log "Step 3: Filtering OSM for speed cameras..."
-osmium tags-filter "$OSM_FILE" \
-  n/highway=speed_camera n/enforcement=maxspeed \
-  -o "$TMPDIR/${REGION_ID}-cameras.osm.pbf" --overwrite
-
-log "Step 3: Filtering OSM for speed limits..."
-osmium tags-filter "$OSM_FILE" \
-  w/maxspeed=* \
-  -o "$TMPDIR/${REGION_ID}-limits.osm.pbf" --overwrite
-
-log "Step 3: Converting to GeoJSON..."
+log "Step 3: Extracting POIs from region PBF..."
 python3 "$SCRIPT_DIR/build-poi-json.py" \
-  "$TMPDIR/${REGION_ID}-cameras.osm.pbf" \
-  "$TMPDIR/${REGION_ID}-limits.osm.pbf" \
-  "$TMPDIR/${REGION_ID}-cameras.json"
+  "$OSM_FILE" \
+  "$TMPDIR/${REGION_ID}-cameras.json" \
+  "$TMPDIR/${REGION_ID}-nav-poi.json"
 
 python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \
-  "$TMPDIR/${REGION_ID}-cameras.json" || die "Step 3: Invalid JSON output"
-log "Step 3: GeoJSON valid — $(du -h "$TMPDIR/${REGION_ID}-cameras.json" | cut -f1)"
+  "$TMPDIR/${REGION_ID}-cameras.json" || die "Step 3: Invalid safety JSON output"
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \
+  "$TMPDIR/${REGION_ID}-nav-poi.json" || die "Step 3: Invalid nav POI JSON output"
+log "Step 3: GeoJSON valid — cameras: $(du -h "$TMPDIR/${REGION_ID}-cameras.json" | cut -f1), nav-poi: $(du -h "$TMPDIR/${REGION_ID}-nav-poi.json" | cut -f1)"
 
-log "Step 3: Uploading to R2..."
+log "Step 3: Uploading safety POIs to R2..."
 aws s3 cp "$TMPDIR/${REGION_ID}-cameras.json" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-cameras.json" \
+  --endpoint-url "$R2_ENDPOINT_URL"
+
+log "Step 3: Uploading navigation POIs to R2..."
+aws s3 cp "$TMPDIR/${REGION_ID}-nav-poi.json" \
+  "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-nav-poi.json" \
   --endpoint-url "$R2_ENDPOINT_URL"
 log "Step 3: Upload complete"
 
