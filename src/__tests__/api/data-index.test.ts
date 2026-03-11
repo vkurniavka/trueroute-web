@@ -114,6 +114,9 @@ describe('GET /api/data/index', () => {
     expect(data.version).toBe(1)
     expect(data.regions).toHaveLength(26)
 
+    // CORS header
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+
     // Deprecation headers
     expect(response.headers.get('Deprecation')).toBe('true')
     expect(response.headers.get('Sunset')).toBeTruthy()

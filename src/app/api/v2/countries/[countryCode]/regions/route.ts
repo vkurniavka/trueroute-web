@@ -7,8 +7,13 @@ import type { ApiError } from '@/types/errors'
 import type { CloudflareEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
 import { validateApiKey } from '@/lib/auth'
+import { CORS_HEADERS, withCors } from '@/lib/cors'
 
 export const runtime = 'edge'
+
+export function OPTIONS(): NextResponse {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
 
 interface CountryRow {
   id: number
@@ -122,9 +127,11 @@ export async function GET(
     )
   }
 
-  return NextResponse.json<RegionList>(result.data, {
-    headers: {
-      'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400',
-    },
-  })
+  return withCors(
+    NextResponse.json<RegionList>(result.data, {
+      headers: {
+        'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400',
+      },
+    }),
+  )
 }

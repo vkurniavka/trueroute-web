@@ -94,6 +94,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
       sha256: 'a'.repeat(64),
       generatedAt: '2025-01-01T00:00:00Z',
     })
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
   })
 
   it('returns 404 when country not found', async () => {
