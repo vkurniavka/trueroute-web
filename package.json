@@ -47,8 +47,7 @@
   "pnpm": {
     "overrides": {
       "esbuild": ">=0.25.0",
-      "undici": ">=6.23.0",
-      "cookie": ">=0.7.0"
+      "undici": ">=6.23.0"
     }
   }
 }
