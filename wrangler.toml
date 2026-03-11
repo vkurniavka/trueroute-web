@@ -37,11 +37,13 @@ database_name = "trueroute-d1"
 database_id = "69f61266-c028-4d81-939b-548183540577"
 
 # ---------------------------------------------------------------------------
-# Rate limiter binding (Cloudflare Workers built-in)
-# 100 requests per 60 seconds per IP address.
 # ---------------------------------------------------------------------------
-[[unsafe.bindings]]
-name = "RATE_LIMITER"
-type = "ratelimit"
-namespace_id = "1"
-simple = { limit = 100, period = 60 }
+# Rate limiting: Cloudflare Pages does not support [[unsafe.bindings]].
+# RATE_LIMITER is optional in validateApiKey() — rate limiting is silently
+# skipped when the binding is absent (graceful degradation).
+#
+# To enforce rate limits in production, configure a Cloudflare WAF Rate
+# Limiting rule in the CF dashboard:
+#   Security → WAF → Rate limiting rules → Create rule
+#   Match: URI Path contains /api/  |  Rate: 100 req / 60s per IP
+# ---------------------------------------------------------------------------
