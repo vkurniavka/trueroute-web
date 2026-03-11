@@ -1,15 +1,21 @@
+import { Activity, FolderOpen, Map, Navigation, ShieldCheck } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import type { ComponentType, SVGProps } from 'react'
 
-const goldIconFeatures = new Set(['gpsDetectionTitle', 'deadReckoningTitle'])
-
-const features = [
-  { titleKey: 'gpsDetectionTitle', descKey: 'gpsDetectionDesc', href: '/how-to/positioning-modes', icon: '🛡️' },
-  { titleKey: 'deadReckoningTitle', descKey: 'deadReckoningDesc', href: '/how-to/positioning-modes', icon: '📍' },
-  { titleKey: 'offlineMapsTitle', descKey: 'offlineMapsDesc', href: '/how-to/download-maps', icon: '🗺️' },
-  { titleKey: 'gpxImportTitle', descKey: 'gpxImportDesc', href: '/how-to/import-gpx-route', icon: '📂' },
-  { titleKey: 'diagnosticsTitle', descKey: 'diagnosticsDesc', href: '/how-to/diagnostics', icon: '📊' },
-] as const
+const features: ReadonlyArray<{
+  titleKey: string
+  descKey: string
+  href: string
+  Icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number; strokeWidth?: number }>
+  primary: boolean
+}> = [
+  { titleKey: 'gpsDetectionTitle', descKey: 'gpsDetectionDesc', href: '/how-to/positioning-modes', Icon: ShieldCheck, primary: true },
+  { titleKey: 'deadReckoningTitle', descKey: 'deadReckoningDesc', href: '/how-to/positioning-modes', Icon: Navigation, primary: true },
+  { titleKey: 'offlineMapsTitle', descKey: 'offlineMapsDesc', href: '/how-to/download-maps', Icon: Map, primary: false },
+  { titleKey: 'gpxImportTitle', descKey: 'gpxImportDesc', href: '/how-to/import-gpx-route', Icon: FolderOpen, primary: false },
+  { titleKey: 'diagnosticsTitle', descKey: 'diagnosticsDesc', href: '/how-to/diagnostics', Icon: Activity, primary: false },
+]
 
 export async function FeaturesSection() {
   const t = await getTranslations('features')
@@ -29,13 +35,12 @@ export async function FeaturesSection() {
               href={feature.href}
               className="group rounded-xl border border-border bg-surface-elevated p-6 transition-colors hover:bg-surface-dark"
             >
-              <span
-                className={`text-3xl ${goldIconFeatures.has(feature.titleKey) ? 'text-gold-primary' : 'text-blue-bright'}`}
-                role="img"
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-xl ${feature.primary ? 'bg-gold-primary/15 text-gold-primary' : 'bg-blue-primary/15 text-blue-bright'}`}
                 aria-hidden="true"
               >
-                {feature.icon}
-              </span>
+                <feature.Icon size={24} strokeWidth={1.5} />
+              </div>
               <h3 className="mt-4 text-lg font-semibold text-text-primary group-hover:text-blue-bright">
                 {t(feature.titleKey)}
               </h3>
