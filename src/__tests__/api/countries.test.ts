@@ -23,7 +23,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 // Must import after mocks are set up
-import { GET } from '@/app/api/v2/countries/route'
+import { GET, OPTIONS } from '@/app/api/v2/countries/route'
 
 function makeRequest(): Request {
   return new Request('http://localhost/api/v2/countries', {
@@ -79,6 +79,7 @@ describe('GET /api/v2/countries', () => {
       name: 'Poland',
       nameUk: 'Польща',
     })
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
   })
 
   it('queries only enabled countries', async () => {
@@ -130,6 +131,19 @@ describe('GET /api/v2/countries', () => {
       error: 'Data service unavailable',
       code: 'DB_UNAVAILABLE',
     })
+  })
+
+  it('returns 204 with CORS headers for OPTIONS preflight', async () => {
+    const response = OPTIONS()
+
+    expect(response.status).toBe(204)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toBe(
+      'GET, OPTIONS',
+    )
+    expect(response.headers.get('Access-Control-Allow-Headers')).toBe(
+      'Content-Type, X-Api-Key',
+    )
   })
 
   it('does not expose internal DB row ids in response', async () => {

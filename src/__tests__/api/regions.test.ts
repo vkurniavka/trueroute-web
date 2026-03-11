@@ -89,6 +89,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
       name: 'Odesa',
       nameUk: 'Одеса',
     })
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
   })
 
   it('queries only enabled countries and uses country_id for regions', async () => {
