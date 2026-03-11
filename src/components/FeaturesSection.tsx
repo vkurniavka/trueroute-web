@@ -15,8 +15,10 @@ export async function FeaturesSection() {
   const t = await getTranslations('features')
 
   return (
-    <section className="bg-surface-dark px-4 py-20 sm:px-6 lg:px-8">
+    <section className="bg-surface-card px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
+        {/* TODO: i18n */}
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-text-muted">Features</p>
         <h2 className="text-center text-3xl font-bold text-text-primary sm:text-4xl">
           {t('title')}
         </h2>
@@ -25,7 +27,7 @@ export async function FeaturesSection() {
             <Link
               key={feature.titleKey}
               href={feature.href}
-              className="group rounded-xl border border-border bg-surface-card p-6 transition-colors hover:bg-surface-elevated"
+              className="group rounded-xl border border-border bg-surface-elevated p-6 transition-colors hover:bg-surface-dark"
             >
               <span
                 className={`text-3xl ${goldIconFeatures.has(feature.titleKey) ? 'text-gold-primary' : 'text-blue-bright'}`}
@@ -37,7 +39,7 @@ export async function FeaturesSection() {
               <h3 className="mt-4 text-lg font-semibold text-text-primary group-hover:text-blue-bright">
                 {t(feature.titleKey)}
               </h3>
-              <p className="mt-2 text-sm text-text-secondary">
+              <p className="mt-2 text-base text-text-secondary">
                 {t(feature.descKey)}
               </p>
             </Link>

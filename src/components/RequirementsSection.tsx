@@ -9,11 +9,13 @@ export async function RequirementsSection() {
   return (
     <section className="bg-surface-dark px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
+        {/* TODO: i18n */}
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-text-muted">Requirements</p>
         <h2 className="text-center text-3xl font-bold text-text-primary sm:text-4xl">
           {t('title')}
         </h2>
         <div className="mt-16 grid gap-12 sm:grid-cols-2">
-          <div className="rounded-xl border border-border bg-surface-card p-6">
+          <div className="rounded-xl border border-border bg-surface-card p-6 transition-colors duration-200 hover:bg-surface-elevated">
             <h3 className="text-lg font-semibold text-text-primary">
               {t('needsTitle')}
             </h3>
@@ -26,7 +28,7 @@ export async function RequirementsSection() {
               ))}
             </ul>
           </div>
-          <div className="rounded-xl border border-border bg-surface-card p-6">
+          <div className="rounded-xl border border-border bg-surface-card p-6 transition-colors duration-200 hover:bg-surface-elevated">
             <h3 className="text-lg font-semibold text-text-secondary">
               {t('notNeededTitle')}
             </h3>
