@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { DbClient } from '@/lib/db'
 import { D1Error } from '@/lib/db'
 import type { ApiError } from '@/types/errors'
+import type { CloudflareEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
 
 interface ApiKeyRow {
@@ -38,6 +39,7 @@ export async function hashApiKey(rawKey: string): Promise<string> {
 export async function validateApiKey(
   request: Request,
   db: DbClient,
+  env?: Pick<CloudflareEnv, 'RATE_LIMITER'>,
 ): Promise<NextResponse<ApiError> | null> {
   const apiKey = request.headers.get('X-Api-Key')
 
@@ -74,6 +76,17 @@ export async function validateApiKey(
       status: 401,
       headers: { 'Cache-Control': 'no-store' },
     })
+  }
+
+  if (env?.RATE_LIMITER) {
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown'
+    const { success } = await env.RATE_LIMITER.limit({ key: ip })
+    if (!success) {
+      return NextResponse.json<ApiError>(
+        { error: 'Too Many Requests', code: 'RATE_LIMITED' },
+        { status: 429, headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' } },
+      )
+    }
   }
 
   return null

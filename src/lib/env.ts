@@ -13,6 +13,11 @@ export const env = {
  * Cloudflare Workers runtime bindings (D1, R2 native, etc.).
  * These are injected by the Workers runtime, not available via process.env.
  */
+export interface RateLimiter {
+  limit: (opts: { key: string }) => Promise<{ success: boolean }>
+}
+
 export interface CloudflareEnv {
   TRUEROUTE_DB: D1Database
+  RATE_LIMITER: RateLimiter
 }

@@ -25,7 +25,7 @@ export async function GET(request: Request): Promise<NextResponse<CountryList | 
   const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
   const db = getDb(env.TRUEROUTE_DB)
 
-  const authError = await validateApiKey(request, db)
+  const authError = await validateApiKey(request, db, env)
   if (authError) return authError
 
   let rows: CountryRow[]

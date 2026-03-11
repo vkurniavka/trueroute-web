@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { validateApiKey, hashApiKey } from '@/lib/auth'
 import type { DbClient } from '@/lib/db'
+import type { CloudflareEnv } from '@/lib/env'
 
 function makeRequest(apiKey?: string): Request {
   const headers = new Headers()
@@ -99,5 +100,42 @@ describe('validateApiKey', () => {
       error: 'Data service unavailable',
       code: 'DB_UNAVAILABLE',
     })
+  })
+
+  it('returns 429 when rate limit is exceeded', async () => {
+    const db = makeMockDb({
+      queryFirst: vi.fn().mockResolvedValue({ id: 1 }),
+    })
+    const env: Pick<CloudflareEnv, 'RATE_LIMITER'> = {
+      RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: false }) },
+    }
+    const result = await validateApiKey(makeRequest('valid-key'), db, env)
+
+    expect(result).not.toBeNull()
+    expect(result!.status).toBe(429)
+    expect(result!.headers.get('Retry-After')).toBe('60')
+    const body = await result!.json()
+    expect(body).toEqual({ error: 'Too Many Requests', code: 'RATE_LIMITED' })
+  })
+
+  it('returns null when rate limit is not exceeded', async () => {
+    const db = makeMockDb({
+      queryFirst: vi.fn().mockResolvedValue({ id: 1 }),
+    })
+    const env: Pick<CloudflareEnv, 'RATE_LIMITER'> = {
+      RATE_LIMITER: { limit: vi.fn().mockResolvedValue({ success: true }) },
+    }
+    const result = await validateApiKey(makeRequest('valid-key'), db, env)
+
+    expect(result).toBeNull()
+  })
+
+  it('skips rate limiting when RATE_LIMITER is not in env', async () => {
+    const db = makeMockDb({
+      queryFirst: vi.fn().mockResolvedValue({ id: 1 }),
+    })
+    const result = await validateApiKey(makeRequest('valid-key'), db)
+
+    expect(result).toBeNull()
   })
 })

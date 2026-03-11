@@ -35,3 +35,13 @@ preview_bucket_name = "trueroute-data"
 binding = "TRUEROUTE_DB"
 database_name = "trueroute-d1"
 database_id = "69f61266-c028-4d81-939b-548183540577"
+
+# ---------------------------------------------------------------------------
+# Rate limiter binding (Cloudflare Workers built-in)
+# 100 requests per 60 seconds per IP address.
+# ---------------------------------------------------------------------------
+[[unsafe.bindings]]
+name = "RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1"
+simple = { limit = 100, period = 60 }
