@@ -18,6 +18,19 @@
   --color-spoof-warning: oklch(0.6083 0.209 27.03);
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-surface-dark: oklch(0.97 0.005 260);
+    --color-surface-card: oklch(0.93 0.008 260);
+    --color-surface-elevated: oklch(0.89 0.010 260);
+    --color-border: oklch(0.82 0.012 260);
+    --color-text-primary: oklch(0.18 0.025 260);
+    --color-text-secondary: oklch(0.38 0.045 260);
+    --color-text-muted: oklch(0.55 0.035 260);
+    /* blue, gold, semantic colours stay unchanged */
+  }
+}
+
 @theme inline {
   --color-surface-dark: var(--color-surface-dark);
   --color-surface-card: var(--color-surface-card);
