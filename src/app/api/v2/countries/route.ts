@@ -6,6 +6,7 @@ import type { CountryList } from '@/schemas/countries.schema'
 import type { ApiError } from '@/types/errors'
 import type { CloudflareEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
+import { validateApiKey } from '@/lib/auth'
 
 export const runtime = 'edge'
 
@@ -15,9 +16,12 @@ interface CountryRow {
   name_uk: string
 }
 
-export async function GET(): Promise<NextResponse<CountryList | ApiError>> {
+export async function GET(request: Request): Promise<NextResponse<CountryList | ApiError>> {
   const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
   const db = getDb(env.TRUEROUTE_DB)
+
+  const authError = await validateApiKey(request, db)
+  if (authError) return authError
 
   let rows: CountryRow[]
   try {
