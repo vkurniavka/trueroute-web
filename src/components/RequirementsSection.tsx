@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
 const needed = ['android', 'adapter', 'vehicle'] as const
@@ -22,7 +23,7 @@ export async function RequirementsSection() {
             <ul className="mt-4 space-y-3">
               {needed.map((key) => (
                 <li key={key} className="flex items-start gap-3 text-text-primary">
-                  <span className="mt-0.5 text-gps-mode" aria-hidden="true">✓</span>
+                  <Check size={16} strokeWidth={2.5} className="mt-0.5 shrink-0 text-gps-mode" aria-hidden="true" />
                   <span>{t(key)}</span>
                 </li>
               ))}
@@ -35,7 +36,7 @@ export async function RequirementsSection() {
             <ul className="mt-4 space-y-3">
               {notNeeded.map((key) => (
                 <li key={key} className="flex items-start gap-3 text-text-secondary">
-                  <span className="mt-0.5 text-text-muted" aria-hidden="true">✗</span>
+                  <X size={16} strokeWidth={2.5} className="mt-0.5 shrink-0 text-text-muted" aria-hidden="true" />
                   <span className="line-through">{t(key)}</span>
                 </li>
               ))}
