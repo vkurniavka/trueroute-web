@@ -1,9 +1,23 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { SiteHeader } from './SiteHeader'
+import { MobileMenuToggle } from './MobileMenuToggle'
 
 vi.mock('next-intl', () => ({
   useTranslations: () => {
+    const translations: Record<string, string> = {
+      'header.logoText': 'TrueRoute',
+      'nav.howTo': 'How-to',
+      'nav.troubleshooting': 'Troubleshooting',
+      'nav.ariaLabel': 'Main navigation',
+      'nav.openMenu': 'Open menu',
+      'nav.closeMenu': 'Close menu',
+    }
+    return (key: string) => translations[key] ?? key
+  },
+}))
+
+vi.mock('next-intl/server', () => ({
+  getTranslations: async () => {
     const translations: Record<string, string> = {
       'header.logoText': 'TrueRoute',
       'nav.howTo': 'How-to',
@@ -40,43 +54,38 @@ vi.mock('next/link', () => ({
 }))
 
 describe('SiteHeader', () => {
-  it('renders logo with link to home', () => {
-    render(<SiteHeader />)
+  it('renders as async Server Component with logo and desktop nav', async () => {
+    const { SiteHeader } = await import('./SiteHeader')
+    const element = await SiteHeader()
+    render(element)
+
     const logo = screen.getByText('TrueRoute')
     expect(logo).toBeInTheDocument()
     expect(logo.closest('a')).toHaveAttribute('href', '/')
+
+    const nav = screen.getByRole('navigation', { name: 'Main navigation' })
+    expect(nav).toBeInTheDocument()
+
+    const howToLink = screen.getByText('How-to').closest('a')
+    expect(howToLink).toHaveAttribute('href', '/how-to/connect-obd2')
+
+    const tsLink = screen.getByText('Troubleshooting').closest('a')
+    expect(tsLink).toHaveAttribute('href', '/troubleshooting/obd2-not-connecting')
   })
 
-  it('renders desktop nav links with correct hrefs', () => {
-    render(<SiteHeader />)
-    const howToLinks = screen.getAllByText('How-to')
-    const desktopLink = howToLinks[0].closest('a')
-    expect(desktopLink).toHaveAttribute('href', '/how-to/connect-obd2')
+  it('uses header landmark element', async () => {
+    const { SiteHeader } = await import('./SiteHeader')
+    const element = await SiteHeader()
+    render(element)
 
-    const troubleshootingLinks = screen.getAllByText('Troubleshooting')
-    const desktopTsLink = troubleshootingLinks[0].closest('a')
-    expect(desktopTsLink).toHaveAttribute(
-      'href',
-      '/troubleshooting/obd2-not-connecting'
-    )
-  })
-
-  it('uses header landmark element', () => {
-    render(<SiteHeader />)
     const header = screen.getByRole('banner')
     expect(header).toBeInTheDocument()
   })
+})
 
-  it('has nav with aria-label', () => {
-    render(<SiteHeader />)
-    const navs = screen.getAllByRole('navigation', {
-      name: 'Main navigation',
-    })
-    expect(navs.length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('renders hamburger button on mobile that toggles menu', () => {
-    render(<SiteHeader />)
+describe('MobileMenuToggle', () => {
+  it('renders hamburger button that toggles mobile menu', () => {
+    render(<MobileMenuToggle />)
     const hamburger = screen.getByLabelText('Open menu')
     expect(hamburger).toBeInTheDocument()
     expect(hamburger).toHaveAttribute('aria-expanded', 'false')
@@ -86,13 +95,25 @@ describe('SiteHeader', () => {
     const closeButton = screen.getByLabelText('Close menu')
     expect(closeButton).toHaveAttribute('aria-expanded', 'true')
 
-    // Mobile menu should now be visible with links
-    const mobileNavs = screen.getAllByRole('navigation', {
+    const mobileNav = screen.getByRole('navigation', {
       name: 'Main navigation',
     })
-    expect(mobileNavs.length).toBe(2) // desktop + mobile
+    expect(mobileNav).toBeInTheDocument()
 
     fireEvent.click(closeButton)
+    expect(screen.getByLabelText('Open menu')).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    )
+  })
+
+  it('closes mobile menu when a link is clicked', () => {
+    render(<MobileMenuToggle />)
+    fireEvent.click(screen.getByLabelText('Open menu'))
+
+    const howToLink = screen.getByText('How-to')
+    fireEvent.click(howToLink)
+
     expect(screen.getByLabelText('Open menu')).toHaveAttribute(
       'aria-expanded',
       'false'
