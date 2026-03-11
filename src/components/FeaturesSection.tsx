@@ -15,7 +15,7 @@ export async function FeaturesSection() {
   const t = await getTranslations('features')
 
   return (
-    <section className="bg-surface-dark px-4 py-20 sm:px-6 lg:px-8">
+    <section className="bg-surface-card px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-3xl font-bold text-text-primary sm:text-4xl">
           {t('title')}

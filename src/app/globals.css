@@ -38,6 +38,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+.cta-gradient {
+  background: radial-gradient(ellipse 90% 60% at 50% 0%, var(--color-blue-deep) 0%, var(--color-surface-dark) 65%);
+  border-top: 1px solid var(--color-border);
+}
+
 body {
   background: var(--color-surface-dark);
   color: var(--color-text-primary);
