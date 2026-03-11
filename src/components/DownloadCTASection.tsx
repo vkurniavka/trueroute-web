@@ -8,6 +8,8 @@ export async function DownloadCTASection() {
   return (
     <section className="cta-gradient px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl text-center">
+        {/* TODO: i18n */}
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-text-muted">Get Started</p>
         <h2 className="text-3xl font-bold text-text-primary sm:text-4xl">
           {t('title')}
         </h2>

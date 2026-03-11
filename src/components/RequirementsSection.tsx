@@ -9,6 +9,8 @@ export async function RequirementsSection() {
   return (
     <section className="bg-surface-dark px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
+        {/* TODO: i18n */}
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-text-muted">Requirements</p>
         <h2 className="text-center text-3xl font-bold text-text-primary sm:text-4xl">
           {t('title')}
         </h2>
