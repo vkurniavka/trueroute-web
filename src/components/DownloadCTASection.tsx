@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import Image from 'next/image'
 import { env } from '@/lib/env'
 
 export async function DownloadCTASection() {
@@ -33,11 +34,15 @@ export async function DownloadCTASection() {
               {t('androidVersion')}
             </p>
           </div>
-          <div className="flex h-32 w-32 items-center justify-center rounded-lg border border-border bg-surface-elevated">
-            <p className="text-center text-xs text-text-muted">
-              {t('qrPlaceholder')}
-            </p>
-          </div>
+          {playStoreUrl ? (
+            <Image
+              src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(playStoreUrl)}&size=128x128&color=E8ECF4&bgcolor=1A2235&margin=8`}
+              width={128}
+              height={128}
+              alt="Scan to download TrueRoute on Google Play"
+              className="rounded-lg"
+            />
+          ) : null}
         </div>
       </div>
     </section>

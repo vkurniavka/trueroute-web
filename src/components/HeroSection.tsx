@@ -10,11 +10,20 @@ export async function HeroSection() {
   return (
     <section className="bg-surface-dark px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
       <div className="mx-auto max-w-4xl text-center">
+        {/* Animated status pill */}
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-primary/30 bg-blue-primary/10 px-4 py-1.5 text-sm text-blue-bright">
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gps-mode opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-gps-mode" />
+          </span>
+          GPS Protected · Dead Reckoning Active
+        </div>
         {/* Shield icon */}
         <div className="mb-8 flex justify-center">
           <div className="relative">
-            {/* Glow behind the shield */}
-            <div className="absolute inset-0 scale-75 rounded-full bg-blue-primary opacity-20 blur-2xl" />
+            {/* Two-layer glow behind the shield */}
+            <div className="absolute inset-0 scale-110 rounded-full bg-blue-primary opacity-35 blur-3xl" aria-hidden="true" />
+            <div className="absolute inset-0 translate-x-4 translate-y-4 scale-75 rounded-full bg-gold-primary opacity-15 blur-2xl" aria-hidden="true" />
             <Image
               src="/trueroute-icon.svg"
               alt="TrueRoute shield"
