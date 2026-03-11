@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --color-surface-dark: #0F1624;
-  --color-surface-card: #1A2235;
-  --color-surface-elevated: #222C40;
-  --color-border: #252D42;
-  --color-text-primary: #E8ECF4;
-  --color-text-secondary: #8DA4C8;
-  --color-text-muted: #506080;
-  --color-blue-deep: #0D3B78;
-  --color-blue-primary: #1A5FB4;
-  --color-blue-bright: #1A6DD4;
-  --color-gold-primary: #FFD740;
-  --color-gold-deep: #F5C400;
-  --color-navy-bg: #0B2E5E;
-  --color-gps-mode: #34A853;
-  --color-spoof-warning: #E53935;
+  --color-surface-dark: oklch(0.2007 0.0302 263.54);
+  --color-surface-card: oklch(0.2539 0.038 266.27);
+  --color-surface-elevated: oklch(0.2935 0.0393 263.68);
+  --color-border: oklch(0.2996 0.0399 267.94);
+  --color-text-primary: oklch(0.9424 0.0116 264.51);
+  --color-text-secondary: oklch(0.7138 0.0588 259.27);
+  --color-text-muted: oklch(0.4888 0.0553 263.86);
+  --color-blue-deep: oklch(0.3605 0.1151 257.49);
+  --color-blue-primary: oklch(0.4923 0.1506 256.36);
+  --color-blue-bright: oklch(0.5463 0.176 256.86);
+  --color-gold-primary: oklch(0.8888 0.164 93.4);
+  --color-gold-deep: oklch(0.8396 0.1716 90.43);
+  --color-navy-bg: oklch(0.3072 0.0944 257.67);
+  --color-gps-mode: oklch(0.6475 0.1603 148.5);
+  --color-spoof-warning: oklch(0.6083 0.209 27.03);
 }
 
 @theme inline {
