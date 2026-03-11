@@ -17,7 +17,7 @@ export async function HowItWorksSection() {
         </h2>
         <div className="mt-16 grid gap-12 sm:grid-cols-3">
           {steps.map((step) => (
-            <div key={step.num} className="rounded-xl border border-border bg-surface-card p-6 text-center">
+            <div key={step.num} className="rounded-xl border border-border bg-surface-card p-6 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-primary/50 hover:bg-surface-elevated">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-primary text-lg font-bold text-text-primary">
                 {step.num}
               </div>

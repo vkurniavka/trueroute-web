@@ -13,7 +13,7 @@ export async function RequirementsSection() {
           {t('title')}
         </h2>
         <div className="mt-16 grid gap-12 sm:grid-cols-2">
-          <div className="rounded-xl border border-border bg-surface-card p-6">
+          <div className="rounded-xl border border-border bg-surface-card p-6 transition-colors duration-200 hover:bg-surface-elevated">
             <h3 className="text-lg font-semibold text-text-primary">
               {t('needsTitle')}
             </h3>
@@ -26,7 +26,7 @@ export async function RequirementsSection() {
               ))}
             </ul>
           </div>
-          <div className="rounded-xl border border-border bg-surface-card p-6">
+          <div className="rounded-xl border border-border bg-surface-card p-6 transition-colors duration-200 hover:bg-surface-elevated">
             <h3 className="text-lg font-semibold text-text-secondary">
               {t('notNeededTitle')}
             </h3>

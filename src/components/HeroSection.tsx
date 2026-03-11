@@ -37,7 +37,7 @@ export async function HeroSection() {
               href={playStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg bg-gold-primary px-6 py-3 text-base font-bold text-navy-bg transition-colors hover:bg-gold-deep"
+              className="inline-flex items-center rounded-lg bg-gold-primary px-6 py-3 text-base font-bold text-navy-bg transition-colors hover:bg-gold-deep active:scale-95"
             >
               {t('ctaDownload')}
             </a>
