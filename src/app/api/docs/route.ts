@@ -8,8 +8,14 @@ const html = `<!DOCTYPE html>
   <title>TrueRoute Data API — Documentation</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
-    body { margin: 0; background: #1a1a2e; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #fafafa; font-family: sans-serif; }
     #swagger-ui .topbar { display: none; }
+    /* Ensure code blocks and model text are always readable */
+    #swagger-ui .microlight,
+    #swagger-ui pre.microlight { color: #3b4151 !important; background: #f0f0f0 !important; }
+    #swagger-ui .model,
+    #swagger-ui .model-title { color: #3b4151 !important; }
   </style>
 </head>
 <body>
