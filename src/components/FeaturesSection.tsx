@@ -27,7 +27,7 @@ export async function FeaturesSection() {
             <Link
               key={feature.titleKey}
               href={feature.href}
-              className="group rounded-xl border border-border bg-surface-card p-6 transition-colors hover:bg-surface-elevated"
+              className="group rounded-xl border border-border bg-surface-elevated p-6 transition-colors hover:bg-surface-dark"
             >
               <span
                 className={`text-3xl ${goldIconFeatures.has(feature.titleKey) ? 'text-gold-primary' : 'text-blue-bright'}`}
