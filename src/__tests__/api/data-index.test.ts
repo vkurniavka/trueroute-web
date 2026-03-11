@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextResponse } from 'next/server'
 import type { RegionIndex } from '@/schemas/regions.schema'
+import type { ApiError } from '@/types/errors'
 
 // Mock @cloudflare/next-on-pages to provide a fake D1 binding
 const mockAll = vi.fn()
@@ -14,8 +16,20 @@ vi.mock('@cloudflare/next-on-pages', () => ({
   }),
 }))
 
+// Mock auth — returns null (authenticated) by default
+const mockValidateApiKey = vi.fn().mockResolvedValue(null)
+vi.mock('@/lib/auth', () => ({
+  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
+}))
+
 // Must import after mocks are set up
 import { GET } from '@/app/api/data/index/route'
+
+function makeRequest(): Request {
+  return new Request('http://localhost/api/data/index', {
+    headers: { 'X-Api-Key': 'test-key' },
+  })
+}
 
 const OBLAST_IDS = [
   'cherkasy',
@@ -69,12 +83,28 @@ function makeJoinedRows() {
 describe('GET /api/data/index', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockValidateApiKey.mockResolvedValue(null)
+  })
+
+  it('returns 401 when API key validation fails', async () => {
+    mockValidateApiKey.mockResolvedValueOnce(
+      NextResponse.json<ApiError>(
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } },
+      ),
+    )
+
+    const response = await GET(makeRequest())
+    const data = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(data).toEqual({ error: 'Unauthorized', code: 'UNAUTHORIZED' })
   })
 
   it('returns validated RegionIndex with 200 and correct cache headers', async () => {
     mockAll.mockResolvedValue({ results: makeJoinedRows() })
 
-    const response = await GET()
+    const response = await GET(makeRequest())
     const data: RegionIndex = await response.json()
 
     expect(response.status).toBe(200)
@@ -93,7 +123,7 @@ describe('GET /api/data/index', () => {
   it('returns 503 with Retry-After when D1 is unavailable', async () => {
     mockAll.mockRejectedValue(new Error('D1 connection failed'))
 
-    const response = await GET()
+    const response = await GET(makeRequest())
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -110,7 +140,7 @@ describe('GET /api/data/index', () => {
       throw new Error('D1 prepare failed')
     })
 
-    const response = await GET()
+    const response = await GET(makeRequest())
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -126,7 +156,7 @@ describe('GET /api/data/index', () => {
     // Return empty results — will fail RegionIndexSchema .min(25) on regions
     mockAll.mockResolvedValue({ results: [] })
 
-    const response = await GET()
+    const response = await GET(makeRequest())
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -140,7 +170,7 @@ describe('GET /api/data/index', () => {
   it('sets correct Cache-Control on success response', async () => {
     mockAll.mockResolvedValue({ results: makeJoinedRows() })
 
-    const response = await GET()
+    const response = await GET(makeRequest())
 
     expect(response.status).toBe(200)
     expect(response.headers.get('Cache-Control')).toBe(
