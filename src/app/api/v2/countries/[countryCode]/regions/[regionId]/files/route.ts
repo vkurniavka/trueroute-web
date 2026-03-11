@@ -55,7 +55,7 @@ export async function GET(
   const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
   const db = getDb(env.TRUEROUTE_DB)
 
-  const authError = await validateApiKey(request, db)
+  const authError = await validateApiKey(request, db, env)
   if (authError) return authError
 
   // Step 1: Check country exists and is enabled
