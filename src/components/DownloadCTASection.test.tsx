@@ -62,10 +62,19 @@ describe('DownloadCTASection', () => {
     expect(screen.getByText('Requires Android 8.0+')).toBeInTheDocument()
   })
 
-  it('renders QR code placeholder', async () => {
+  it('does not render QR code when play store URL is not set', async () => {
     const { DownloadCTASection } = await import('./DownloadCTASection')
     const result = await DownloadCTASection()
     render(result)
-    expect(screen.getByText('QR code coming soon')).toBeInTheDocument()
+    expect(screen.queryByAltText('Scan to download TrueRoute on Google Play')).not.toBeInTheDocument()
+  })
+
+  it('renders QR code image when play store URL is set', async () => {
+    envMock.playStoreUrl = 'https://play.google.com/store/apps/details?id=com.trueroute'
+    const { DownloadCTASection } = await import('./DownloadCTASection')
+    const result = await DownloadCTASection()
+    render(result)
+    const qrImage = screen.getByAltText('Scan to download TrueRoute on Google Play')
+    expect(qrImage).toBeInTheDocument()
   })
 })
