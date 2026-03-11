@@ -20,7 +20,7 @@ GPS Mode uses your phone's GPS receiver as the sole position source. This mode i
 
 **Accuracy:** Depends on GPS signal quality, typically ≤5 meters in open sky conditions.
 
-[screenshot: map view in GPS Mode showing blue position marker]
+<ScreenshotPlaceholder label="map view in GPS Mode showing blue position marker" />
 
 ## Enhanced Mode
 
@@ -30,7 +30,7 @@ Enhanced Mode fuses GPS with OBD2 vehicle speed data using an Extended Kalman Fi
 
 **Accuracy:** ≤5 meters fused position under normal conditions.
 
-[screenshot: map view in Enhanced Mode showing position marker with accuracy ring]
+<ScreenshotPlaceholder label="map view in Enhanced Mode showing position marker with accuracy ring" />
 
 ## Dead Reckoning Mode
 
@@ -40,7 +40,7 @@ Dead Reckoning Mode activates when GPS is detected as unreliable. The app propag
 
 **Accuracy:** Less than 5% drift per 10 km with OBD2 connected. Less than 20% drift per 10 km without OBD2 (gyroscope and accelerometer only).
 
-[screenshot: map view in Dead Reckoning Mode showing orange position marker]
+<ScreenshotPlaceholder label="map view in Dead Reckoning Mode showing orange position marker" />
 
 ## How mode switching works
 
@@ -50,7 +50,7 @@ TrueRoute uses a spoof confidence score from 0.0 to 1.0 to decide when to switch
 - **Score reaches 0.8:** The app switches to Dead Reckoning Mode automatically.
 - **Score drops below 0.3 for 30 continuous seconds:** The app returns to GPS-based positioning (GPS Mode or Enhanced Mode depending on OBD2 connection).
 
-[screenshot: GPS disruption warning banner at confidence score 0.6]
+<ScreenshotPlaceholder label="GPS disruption warning banner at confidence score 0.6" />
 
 ## Manual override
 

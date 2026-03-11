@@ -37,6 +37,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+function getReadingTimeMin(slug: string): number {
+  const filePath = path.join(contentDir, `${slug}.mdx`)
+  try {
+    const source = fs.readFileSync(filePath, 'utf-8')
+    const words = source.split(/\s+/).length
+    return Math.max(1, Math.round(words / 200))
+  } catch {
+    return 1
+  }
+}
+
 export default async function TroubleshootingPage({ params }: PageProps) {
   const { slug } = await params
   const mod = await getMdxModule(slug)
@@ -44,13 +55,14 @@ export default async function TroubleshootingPage({ params }: PageProps) {
 
   const Content = mod.default
   const title = mod.metadata?.title ?? slug
+  const readingTimeMin = getReadingTimeMin(slug)
 
   const faqItems = mod.faqItems ?? []
 
   return (
     <>
       {faqItems.length > 0 && <FaqStructuredData items={faqItems} />}
-      <DocLayout section="troubleshooting" title={title}>
+      <DocLayout section="troubleshooting" title={title} readingTimeMin={readingTimeMin}>
         <Content />
       </DocLayout>
     </>

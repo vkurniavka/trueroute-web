@@ -36,6 +36,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+function getReadingTimeMin(slug: string): number {
+  const filePath = path.join(contentDir, `${slug}.mdx`)
+  try {
+    const source = fs.readFileSync(filePath, 'utf-8')
+    const words = source.split(/\s+/).length
+    return Math.max(1, Math.round(words / 200))
+  } catch {
+    return 1
+  }
+}
+
 export default async function HowToPage({ params }: PageProps) {
   const { slug } = await params
   const mod = await getMdxModule(slug)
@@ -43,9 +54,10 @@ export default async function HowToPage({ params }: PageProps) {
 
   const Content = mod.default
   const title = mod.metadata?.title ?? slug
+  const readingTimeMin = getReadingTimeMin(slug)
 
   return (
-    <DocLayout section="how-to" title={title}>
+    <DocLayout section="how-to" title={title} readingTimeMin={readingTimeMin}>
       <Content />
     </DocLayout>
   )
