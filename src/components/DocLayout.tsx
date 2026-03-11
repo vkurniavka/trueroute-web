@@ -4,10 +4,11 @@ import { getTranslations } from 'next-intl/server'
 interface DocLayoutProps {
   section: 'how-to' | 'troubleshooting'
   title: string
+  readingTimeMin?: number
   children: React.ReactNode
 }
 
-export async function DocLayout({ section, title, children }: DocLayoutProps) {
+export async function DocLayout({ section, title, readingTimeMin, children }: DocLayoutProps) {
   const t = await getTranslations('doc')
 
   const sectionLabel =
@@ -33,6 +34,16 @@ export async function DocLayout({ section, title, children }: DocLayoutProps) {
             ›
           </li>
           <li className="text-text-primary">{title}</li>
+          {readingTimeMin != null && (
+            <>
+              <li aria-hidden="true" className="mx-1 text-text-muted">
+                ·
+              </li>
+              <li className="text-text-muted">
+                {t('minRead', { minutes: readingTimeMin })}
+              </li>
+            </>
+          )}
         </ol>
       </nav>
       <div className="doc-content">{children}</div>

@@ -65,7 +65,8 @@
     "breadcrumb": "Breadcrumb",
     "home": "Home",
     "howTo": "How-to",
-    "troubleshooting": "Troubleshooting"
+    "troubleshooting": "Troubleshooting",
+    "minRead": "{minutes} min read"
   },
   "seo": {
     "homeTitle": "TrueRoute — GPS Spoofing Protection for Ukrainian Drivers",
