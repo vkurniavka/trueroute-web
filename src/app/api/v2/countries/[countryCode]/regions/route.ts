@@ -6,6 +6,7 @@ import type { RegionList } from '@/schemas/regions-v2.schema'
 import type { ApiError } from '@/types/errors'
 import type { CloudflareEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
+import { validateApiKey } from '@/lib/auth'
 
 export const runtime = 'edge'
 
@@ -20,7 +21,7 @@ interface RegionRow {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ countryCode: string }> },
 ): Promise<NextResponse<RegionList | ApiError>> {
   const { countryCode } = await params
@@ -35,6 +36,9 @@ export async function GET(
 
   const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
   const db = getDb(env.TRUEROUTE_DB)
+
+  const authError = await validateApiKey(request, db)
+  if (authError) return authError
 
   // Step 1: Check country exists and is enabled
   let country: CountryRow | null

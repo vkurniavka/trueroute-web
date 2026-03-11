@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextResponse } from 'next/server'
 import type { RegionList } from '@/schemas/regions-v2.schema'
+import type { ApiError } from '@/types/errors'
 
 // Mock @cloudflare/next-on-pages to provide a fake D1 binding
 const mockFirst = vi.fn()
@@ -15,6 +17,12 @@ vi.mock('@cloudflare/next-on-pages', () => ({
   }),
 }))
 
+// Mock auth — returns null (authenticated) by default
+const mockValidateApiKey = vi.fn().mockResolvedValue(null)
+vi.mock('@/lib/auth', () => ({
+  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
+}))
+
 // Must import after mocks are set up
 import { GET } from '@/app/api/v2/countries/[countryCode]/regions/route'
 
@@ -22,9 +30,32 @@ function makeContext(countryCode: string) {
   return { params: Promise.resolve({ countryCode }) }
 }
 
+function makeRequest(countryCode: string): Request {
+  return new Request(
+    `http://localhost/api/v2/countries/${countryCode}/regions`,
+    { headers: { 'X-Api-Key': 'test-key' } },
+  )
+}
+
 describe('GET /api/v2/countries/[countryCode]/regions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockValidateApiKey.mockResolvedValue(null)
+  })
+
+  it('returns 401 when API key validation fails', async () => {
+    mockValidateApiKey.mockResolvedValueOnce(
+      NextResponse.json<ApiError>(
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } },
+      ),
+    )
+
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
+    const data = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(data).toEqual({ error: 'Unauthorized', code: 'UNAUTHORIZED' })
   })
 
   it('returns 200 with region list and correct cache headers', async () => {
@@ -38,8 +69,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
       ],
     })
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    const response = await GET(request, makeContext('UA'))
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
     const data: RegionList = await response.json()
 
     expect(response.status).toBe(200)
@@ -65,8 +95,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
     mockFirst.mockResolvedValueOnce({ id: 42 })
     mockAll.mockResolvedValueOnce({ results: [] })
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    await GET(request, makeContext('UA'))
+    await GET(makeRequest('UA'), makeContext('UA'))
 
     // First query: country lookup with enabled check
     expect(mockPrepare).toHaveBeenCalledWith(
@@ -80,8 +109,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
   it('returns 404 when country not found', async () => {
     mockFirst.mockResolvedValueOnce(null)
 
-    const request = new Request('http://localhost/api/v2/countries/XX/regions')
-    const response = await GET(request, makeContext('XX'))
+    const response = await GET(makeRequest('XX'), makeContext('XX'))
     const data = await response.json()
 
     expect(response.status).toBe(404)
@@ -93,8 +121,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
   })
 
   it('returns 404 for invalid country code format', async () => {
-    const request = new Request('http://localhost/api/v2/countries/ua/regions')
-    const response = await GET(request, makeContext('ua'))
+    const response = await GET(makeRequest('ua'), makeContext('ua'))
     const data = await response.json()
 
     expect(response.status).toBe(404)
@@ -110,8 +137,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
   it('returns 503 with DB_UNAVAILABLE when D1 fails on country lookup', async () => {
     mockFirst.mockRejectedValueOnce(new Error('D1 connection failed'))
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    const response = await GET(request, makeContext('UA'))
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -127,8 +153,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
     mockFirst.mockResolvedValueOnce({ id: 1 })
     mockAll.mockRejectedValueOnce(new Error('D1 query failed'))
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    const response = await GET(request, makeContext('UA'))
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -148,8 +173,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
       ],
     })
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    const response = await GET(request, makeContext('UA'))
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
     const data: RegionList = await response.json()
 
     expect(response.status).toBe(200)
@@ -162,8 +186,7 @@ describe('GET /api/v2/countries/[countryCode]/regions', () => {
     mockFirst.mockResolvedValueOnce({ id: 1 })
     mockAll.mockResolvedValueOnce({ results: [] })
 
-    const request = new Request('http://localhost/api/v2/countries/UA/regions')
-    const response = await GET(request, makeContext('UA'))
+    const response = await GET(makeRequest('UA'), makeContext('UA'))
     const data: RegionList = await response.json()
 
     expect(response.status).toBe(200)

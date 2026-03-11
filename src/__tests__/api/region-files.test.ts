@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextResponse } from 'next/server'
 import type { RegionFileList } from '@/schemas/region-files.schema'
+import type { ApiError } from '@/types/errors'
 
 // Mock @cloudflare/next-on-pages to provide a fake D1 binding
 const mockFirst = vi.fn()
@@ -15,6 +17,12 @@ vi.mock('@cloudflare/next-on-pages', () => ({
   }),
 }))
 
+// Mock auth — returns null (authenticated) by default
+const mockValidateApiKey = vi.fn().mockResolvedValue(null)
+vi.mock('@/lib/auth', () => ({
+  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
+}))
+
 // Must import after mocks are set up
 import { GET } from '@/app/api/v2/countries/[countryCode]/regions/[regionId]/files/route'
 
@@ -22,9 +30,32 @@ function makeContext(countryCode: string, regionId: string) {
   return { params: Promise.resolve({ countryCode, regionId }) }
 }
 
+function makeRequest(countryCode: string, regionId: string): Request {
+  return new Request(
+    `http://localhost/api/v2/countries/${countryCode}/regions/${regionId}/files`,
+    { headers: { 'X-Api-Key': 'test-key' } },
+  )
+}
+
 describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockValidateApiKey.mockResolvedValue(null)
+  })
+
+  it('returns 401 when API key validation fails', async () => {
+    mockValidateApiKey.mockResolvedValueOnce(
+      NextResponse.json<ApiError>(
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401, headers: { 'Cache-Control': 'no-store' } },
+      ),
+    )
+
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
+    const data = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(data).toEqual({ error: 'Unauthorized', code: 'UNAUTHORIZED' })
   })
 
   it('returns 200 with file list and correct cache headers', async () => {
@@ -45,10 +76,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
       ],
     })
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data: RegionFileList = await response.json()
 
     expect(response.status).toBe(200)
@@ -71,10 +99,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
   it('returns 404 when country not found', async () => {
     mockFirst.mockResolvedValueOnce(null)
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/XX/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('XX', 'kyiv'))
+    const response = await GET(makeRequest('XX', 'kyiv'), makeContext('XX', 'kyiv'))
     const data = await response.json()
 
     expect(response.status).toBe(404)
@@ -91,10 +116,10 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
     // Region not found
     mockFirst.mockResolvedValueOnce(null)
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/nonexistent/files',
+    const response = await GET(
+      makeRequest('UA', 'nonexistent'),
+      makeContext('UA', 'nonexistent'),
     )
-    const response = await GET(request, makeContext('UA', 'nonexistent'))
     const data = await response.json()
 
     expect(response.status).toBe(404)
@@ -106,10 +131,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
   })
 
   it('returns 404 for invalid country code format', async () => {
-    const request = new Request(
-      'http://localhost/api/v2/countries/ua/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('ua', 'kyiv'))
+    const response = await GET(makeRequest('ua', 'kyiv'), makeContext('ua', 'kyiv'))
     const data = await response.json()
 
     expect(response.status).toBe(404)
@@ -125,10 +147,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
   it('returns 503 with DB_UNAVAILABLE when D1 fails on country lookup', async () => {
     mockFirst.mockRejectedValueOnce(new Error('D1 connection failed'))
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -144,10 +163,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
     mockFirst.mockResolvedValueOnce({ id: 1 })
     mockFirst.mockRejectedValueOnce(new Error('D1 query failed'))
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -164,10 +180,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
     mockFirst.mockResolvedValueOnce({ id: 10 })
     mockAll.mockRejectedValueOnce(new Error('D1 query failed'))
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data = await response.json()
 
     expect(response.status).toBe(503)
@@ -195,10 +208,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
       ],
     })
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data: RegionFileList = await response.json()
 
     expect(response.status).toBe(200)
@@ -214,10 +224,7 @@ describe('GET /api/v2/countries/[countryCode]/regions/[regionId]/files', () => {
     mockFirst.mockResolvedValueOnce({ id: 10 })
     mockAll.mockResolvedValueOnce({ results: [] })
 
-    const request = new Request(
-      'http://localhost/api/v2/countries/UA/regions/kyiv/files',
-    )
-    const response = await GET(request, makeContext('UA', 'kyiv'))
+    const response = await GET(makeRequest('UA', 'kyiv'), makeContext('UA', 'kyiv'))
     const data: RegionFileList = await response.json()
 
     expect(response.status).toBe(200)

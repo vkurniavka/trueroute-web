@@ -6,6 +6,7 @@ import type { RegionIndex, Asset } from '@/schemas/regions.schema'
 import type { ApiError } from '@/types/errors'
 import type { CloudflareEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
+import { validateApiKey } from '@/lib/auth'
 
 export const runtime = 'edge'
 
@@ -36,9 +37,12 @@ function dbErrorResponse(): NextResponse<ApiError> {
   )
 }
 
-export async function GET(): Promise<NextResponse<RegionIndex | ApiError>> {
+export async function GET(request: Request): Promise<NextResponse<RegionIndex | ApiError>> {
   const { env } = getRequestContext() as unknown as { env: CloudflareEnv }
   const db = getDb(env.TRUEROUTE_DB)
+
+  const authError = await validateApiKey(request, db)
+  if (authError) return authError
 
   let rows: JoinedRow[]
   try {
