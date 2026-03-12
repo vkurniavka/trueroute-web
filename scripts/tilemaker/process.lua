@@ -1,5 +1,18 @@
 -- process.lua — TrueRoute navigation tile schema
--- Extracts roads, places, water, boundaries, and buildings for navigation use.
+-- Outputs Protomaps-compatible layer names so the bundled protomaps-dark.json
+-- style renders correctly in MapLibre without any style modifications.
+--
+-- Layer name mapping (Protomaps schema):
+--   roads         ← transportation geometry + road labels (merged)
+--   buildings     ← building polygons
+--   places        ← place name nodes
+--   pois          ← amenity / shop nodes and way centroids
+--   boundaries    ← administrative boundary relations and ways
+--   water         ← water body polygons          (unchanged)
+--   waterway      ← river / canal lines          (unchanged — bonus layer)
+--   landuse       ← landuse / natural polygons   (unchanged)
+--   addr          ← address points               (app-specific, unchanged)
+--   restriction   ← turn restriction relations   (app-specific, unchanged)
 
 -- ============================================================================
 -- Tag keys that trigger processing (tilemaker uses these to filter input)
@@ -14,16 +27,12 @@ relation_keys= { "boundary", "type" }
 -- ============================================================================
 local function normalize_maxspeed(raw)
   if raw == "" then return nil end
-  -- Plain integer
   local num = tonumber(raw)
   if num then return math.floor(num) end
-  -- "XX mph"
   local mph = raw:match("^(%d+)%s*mph$")
   if mph then return math.floor(tonumber(mph) * 1.609) end
-  -- "XX km/h"
   local kmh = raw:match("^(%d+)%s*km/?h$")
   if kmh then return math.floor(tonumber(kmh)) end
-  -- Country defaults like "UA:urban" — not numeric
   return nil
 end
 
@@ -37,24 +46,30 @@ local function normalize_oneway(raw)
 end
 
 -- ============================================================================
--- Highway class mapping (OSM highway tag → navigation class)
+-- Highway class → Protomaps `kind` value
+-- Protomaps dark style filters roads using these kind values:
+--   highway     → motorway / trunk (and their link variants)
+--   major_road  → primary / secondary (and link variants)
+--   medium_road → tertiary
+--   minor_road  → unclassified / residential / living_street / service
+--   path        → cycleway / footway / path / pedestrian / steps / track
 -- ============================================================================
-local highway_class = {
-  motorway        = "motorway",
-  motorway_link   = "motorway",
-  trunk           = "trunk",
-  trunk_link      = "trunk",
-  primary         = "primary",
-  primary_link    = "primary",
-  secondary       = "secondary",
-  secondary_link  = "secondary",
-  tertiary        = "tertiary",
-  tertiary_link   = "tertiary",
-  unclassified    = "minor",
-  residential     = "minor",
-  living_street   = "minor",
-  service         = "service",
-  track           = "track",
+local highway_kind = {
+  motorway        = "highway",
+  motorway_link   = "highway",
+  trunk           = "highway",
+  trunk_link      = "highway",
+  primary         = "major_road",
+  primary_link    = "major_road",
+  secondary       = "major_road",
+  secondary_link  = "major_road",
+  tertiary        = "medium_road",
+  tertiary_link   = "medium_road",
+  unclassified    = "minor_road",
+  residential     = "minor_road",
+  living_street   = "minor_road",
+  service         = "minor_road",
+  track           = "path",
   path            = "path",
   cycleway        = "path",
   footway         = "path",
@@ -63,37 +78,49 @@ local highway_class = {
   ferry           = "ferry",
 }
 
+-- Minimum zoom by Protomaps kind
+local kind_minzoom = {
+  highway    = 7,
+  major_road = 9,
+  medium_road= 11,
+  minor_road = 11,
+  path       = 14,
+  ferry      = 10,
+}
+
 -- ============================================================================
--- POI classification: amenity/shop tag → { class, minzoom }
+-- POI classification: amenity/shop tag → { kind, minzoom }
+-- kind values match Protomaps pois layer conventions used in the app style.
 -- ============================================================================
 local poi_amenity = {
-  fuel             = { class = "fuel",         minzoom = 12 },
-  hospital         = { class = "hospital",     minzoom = 11 },
-  pharmacy         = { class = "pharmacy",     minzoom = 13 },
-  parking          = { class = "parking",      minzoom = 14 },
-  atm              = { class = "atm",          minzoom = 14 },
-  bank             = { class = "atm",          minzoom = 14 },
-  police           = { class = "police",       minzoom = 12 },
-  car_wash         = { class = "car_wash",     minzoom = 14 },
-  charging_station = { class = "ev_charging",  minzoom = 13 },
+  fuel             = { kind = "fuel",         minzoom = 12 },
+  hospital         = { kind = "hospital",     minzoom = 11 },
+  pharmacy         = { kind = "pharmacy",     minzoom = 13 },
+  parking          = { kind = "parking",      minzoom = 14 },
+  atm              = { kind = "atm",          minzoom = 14 },
+  bank             = { kind = "atm",          minzoom = 14 },
+  police           = { kind = "police",       minzoom = 12 },
+  car_wash         = { kind = "car_wash",     minzoom = 14 },
+  charging_station = { kind = "ev_charging",  minzoom = 13 },
 }
 
 local poi_shop = {
-  supermarket      = { class = "supermarket",  minzoom = 13 },
+  supermarket      = { kind = "supermarket",  minzoom = 13 },
 }
 
 -- ============================================================================
--- Place rank (lower = more important = shown at lower zooms)
+-- Place → Protomaps kind + min_zoom
+-- Protomaps dark style uses kind values: locality, neighbourhood, macrohood, etc.
 -- ============================================================================
-local place_rank = {
-  city         = 1,
-  town         = 2,
-  village      = 3,
-  hamlet       = 4,
-  suburb       = 5,
-  neighbourhood = 6,
-  locality     = 7,
-  isolated_dwelling = 8,
+local place_kind = {
+  city              = { kind = "locality",      minzoom = 5  },
+  town              = { kind = "locality",      minzoom = 7  },
+  village           = { kind = "locality",      minzoom = 9  },
+  hamlet            = { kind = "locality",      minzoom = 10 },
+  suburb            = { kind = "locality",      minzoom = 11 },
+  neighbourhood     = { kind = "neighbourhood", minzoom = 12 },
+  locality          = { kind = "locality",      minzoom = 13 },
+  isolated_dwelling = { kind = "locality",      minzoom = 13 },
 }
 
 -- ============================================================================
@@ -102,15 +129,16 @@ local place_rank = {
 function node_function(node)
   local place = node:Find("place")
   if place ~= "" then
-    local rank = place_rank[place]
-    if rank then
-      node:Layer("place", false)
-      node:Attribute("class", place)
+    local pk = place_kind[place]
+    if pk then
+      node:Layer("places", false)
+      node:Attribute("kind", pk.kind)
       node:Attribute("name", node:Find("name"))
       node:Attribute("name:uk", node:Find("name:uk"))
       node:Attribute("name:en", node:Find("name:en"))
-      node:AttributeNumeric("rank", rank)
-      node:MinZoom(math.max(4, rank + 3))
+      -- min_zoom used by Protomaps style for sort_key / label priority
+      node:AttributeNumeric("min_zoom", pk.minzoom)
+      node:MinZoom(pk.minzoom)
     end
     return
   end
@@ -134,8 +162,8 @@ function node_function(node)
     poi = poi_shop[shop]
   end
   if poi then
-    node:Layer("poi", false)
-    node:Attribute("class", poi.class)
+    node:Layer("pois", false)
+    node:Attribute("kind", poi.kind)
     local name = node:Find("name")
     if name ~= "" then node:Attribute("name", name) end
     local name_uk = node:Find("name:uk")
@@ -159,64 +187,51 @@ function way_function(way)
 
   -- Roads & paths
   if highway ~= "" then
-    local class = highway_class[highway]
-    if not class then return end
+    local kind = highway_kind[highway]
+    if not kind then return end
 
-    -- Transportation layer (geometry)
-    way:Layer("transportation", false)
-    way:Attribute("class", class)
+    local minz = kind_minzoom[kind] or 14
+
+    -- Roads layer (Protomaps schema name: "roads")
+    way:Layer("roads", false)
+    way:Attribute("kind", kind)
+
+    -- Road name — included directly in the roads layer (Protomaps style renders
+    -- labels from the same roads layer via text-field layout property)
+    local name = way:Find("name")
+    if name ~= "" then
+      way:Attribute("name", name)
+      way:Attribute("name:uk", way:Find("name:uk"))
+    end
+
+    -- Navigation attributes
     way:Attribute("surface", way:Find("surface"))
     way:Attribute("access", way:Find("access"))
 
-    -- Road reference number (M-06, N-01, E-40)
     local ref = way:Find("ref")
     if ref ~= "" then way:Attribute("ref", ref) end
 
-    -- Lane count
     local lanes = tonumber(way:Find("lanes"))
     if lanes then way:AttributeNumeric("lanes", lanes) end
 
-    -- Bridge and tunnel flags
-    if way:Find("bridge") == "yes" then way:Attribute("bridge", "1") end
-    if way:Find("tunnel") == "yes" then way:Attribute("tunnel", "1") end
+    if way:Find("bridge") == "yes" then way:AttributeNumeric("bridge", 1) end
+    if way:Find("tunnel") == "yes" then way:AttributeNumeric("tunnel", 1) end
+    if way:Find("lit")    == "yes" then way:AttributeNumeric("lit",    1) end
 
-    -- Street lighting
-    if way:Find("lit") == "yes" then way:Attribute("lit", "1") end
-
-    -- Normalized oneway: 1 (forward), -1 (reverse), 0 (both)
     way:AttributeNumeric("oneway", normalize_oneway(way:Find("oneway")))
 
-    -- Normalized maxspeed (integer km/h or omitted)
     local maxspeed = normalize_maxspeed(way:Find("maxspeed"))
     if maxspeed then way:AttributeNumeric("maxspeed", maxspeed) end
 
-    -- Min zoom by road class
-    local minz = 14
-    if class == "motorway" or class == "trunk" then minz = 7
-    elseif class == "primary" then minz = 9
-    elseif class == "secondary" then minz = 10
-    elseif class == "tertiary" then minz = 11
-    elseif class == "minor" then minz = 11
-    end
     way:MinZoom(minz)
-
-    -- Transportation name layer
-    local name = way:Find("name")
-    if name ~= "" and minz <= 13 then
-      way:Layer("transportation_name", false)
-      way:Attribute("class", class)
-      way:Attribute("name", name)
-      way:Attribute("name:uk", way:Find("name:uk"))
-      way:MinZoom(math.max(minz, 10))
-    end
     return
   end
 
-  -- Railways (for context)
+  -- Railways (for context — kept in roads layer to render with transit styling)
   if railway == "rail" or railway == "light_rail" or railway == "subway" or railway == "tram" then
-    way:Layer("transportation", false)
-    way:Attribute("class", "rail")
-    way:Attribute("subclass", railway)
+    way:Layer("roads", false)
+    way:Attribute("kind", "rail")
+    way:Attribute("subkind", railway)
     way:MinZoom(10)
     return
   end
@@ -225,7 +240,7 @@ function way_function(way)
   if waterway ~= "" then
     if waterway == "river" or waterway == "canal" or waterway == "stream" then
       way:Layer("waterway", true)
-      way:Attribute("class", waterway)
+      way:Attribute("kind", waterway)
       way:Attribute("name", way:Find("name"))
       way:MinZoom(waterway == "river" and 9 or 12)
     end
@@ -235,43 +250,43 @@ function way_function(way)
   -- Water bodies
   if natural == "water" or natural == "bay" or natural == "coastline" then
     way:Layer("water", true)
-    way:Attribute("class", natural == "coastline" and "ocean" or "lake")
+    way:Attribute("kind", natural == "coastline" and "ocean" or "lake")
     way:MinZoom(4)
     return
   end
 
   -- Landuse
   if landuse ~= "" then
-    local lu_class = nil
-    if landuse == "forest" or landuse == "wood" then lu_class = "forest"
-    elseif landuse == "residential" then lu_class = "residential"
-    elseif landuse == "commercial" or landuse == "retail" then lu_class = "commercial"
-    elseif landuse == "industrial" then lu_class = "industrial"
-    elseif landuse == "farmland" or landuse == "farmyard" then lu_class = "farmland"
-    elseif landuse == "park" or landuse == "recreation_ground" then lu_class = "park"
+    local lu_kind = nil
+    if     landuse == "forest" or landuse == "wood"                 then lu_kind = "forest"
+    elseif landuse == "residential"                                 then lu_kind = "residential"
+    elseif landuse == "commercial" or landuse == "retail"           then lu_kind = "commercial"
+    elseif landuse == "industrial"                                  then lu_kind = "industrial"
+    elseif landuse == "farmland" or landuse == "farmyard"           then lu_kind = "farmland"
+    elseif landuse == "park" or landuse == "recreation_ground"      then lu_kind = "park"
     end
-    if lu_class then
+    if lu_kind then
       way:Layer("landuse", true)
-      way:Attribute("class", lu_class)
+      way:Attribute("kind", lu_kind)
       way:MinZoom(10)
     end
     return
   end
 
-  -- Green areas (natural)
+  -- Green / natural areas
   if natural == "wood" or natural == "scrub" or natural == "heath" then
     way:Layer("landuse", true)
-    way:Attribute("class", "forest")
+    way:Attribute("kind", "forest")
     way:MinZoom(10)
     return
   end
 
-  -- POI ways (amenity=parking, amenity=fuel etc. mapped as areas)
+  -- POI ways (amenity=parking, amenity=fuel etc. mapped as area centroids)
   local amenity = way:Find("amenity")
   local poi = poi_amenity[amenity]
   if poi then
-    way:LayerAsCentroid("poi")
-    way:Attribute("class", poi.class)
+    way:LayerAsCentroid("pois")
+    way:Attribute("kind", poi.kind)
     local name = way:Find("name")
     if name ~= "" then way:Attribute("name", name) end
     local name_uk = way:Find("name:uk")
@@ -280,12 +295,20 @@ function way_function(way)
     -- Don't return — building/landuse processing may also apply
   end
 
-  -- Buildings
+  -- Buildings (Protomaps schema name: "buildings")
   if building ~= "" then
-    way:Layer("building", true)
+    way:Layer("buildings", true)
+    way:Attribute("kind", "building")
+
+    -- Height attributes for optional 3D rendering in Protomaps style
+    local height = tonumber(way:Find("height"))
+    if height then way:AttributeNumeric("height", height) end
+    local min_height = tonumber(way:Find("min_height"))
+    if min_height then way:AttributeNumeric("min_height", min_height) end
+
     way:MinZoom(13)
 
-    -- Building address centroids (way polygons with addr:housenumber)
+    -- Building address centroids
     local housenumber = way:Find("addr:housenumber")
     if housenumber ~= "" then
       way:LayerAsCentroid("addr")
@@ -297,12 +320,15 @@ function way_function(way)
     return
   end
 
-  -- Administrative boundaries
+  -- Administrative boundaries (Protomaps schema name: "boundaries")
   if boundary == "administrative" then
     local admin_level = tonumber(way:Find("admin_level")) or 99
     if admin_level <= 8 then
-      way:Layer("boundary", false)
+      way:Layer("boundaries", false)
       way:AttributeNumeric("admin_level", admin_level)
+      -- Protomaps kind: country (≤2), region (3-4), subregion (5-8)
+      local bkind = admin_level <= 2 and "country" or admin_level <= 4 and "region" or "subregion"
+      way:Attribute("kind", bkind)
       way:MinZoom(admin_level <= 4 and 5 or admin_level <= 6 and 8 or 10)
     end
     return
@@ -339,12 +365,14 @@ end
 function relation_function(relation)
   local rtype = relation:Find("type")
 
-  -- Administrative boundaries
+  -- Administrative boundaries (Protomaps schema name: "boundaries")
   if rtype == "boundary" then
     local admin_level = tonumber(relation:Find("admin_level")) or 99
     if admin_level <= 8 then
-      relation:Layer("boundary", false)
+      relation:Layer("boundaries", false)
       relation:AttributeNumeric("admin_level", admin_level)
+      local bkind = admin_level <= 2 and "country" or admin_level <= 4 and "region" or "subregion"
+      relation:Attribute("kind", bkind)
       relation:Attribute("name", relation:Find("name"))
       relation:Attribute("name:uk", relation:Find("name:uk"))
       relation:MinZoom(admin_level <= 4 and 5 or admin_level <= 6 and 8 or 10)
@@ -352,13 +380,12 @@ function relation_function(relation)
     return
   end
 
-  -- Turn restrictions (type=restriction)
+  -- Turn restrictions (type=restriction) — app-specific routing layer
   if rtype == "restriction" then
     local restriction = relation:Find("restriction")
     if restriction ~= "" and valid_restrictions[restriction] then
       relation:Layer("restriction", false)
       relation:Attribute("restriction", restriction)
-      -- except tag allows specific vehicle type exceptions
       local except = relation:Find("except")
       if except ~= "" then relation:Attribute("except", except) end
       relation:MinZoom(12)

@@ -1,14 +1,10 @@
 {
   "layers": {
-    "transportation": {
+    "roads": {
       "minzoom": 7,
       "maxzoom": 15
     },
-    "transportation_name": {
-      "minzoom": 10,
-      "maxzoom": 15
-    },
-    "place": {
+    "places": {
       "minzoom": 4,
       "maxzoom": 15
     },
@@ -20,14 +16,14 @@
       "minzoom": 9,
       "maxzoom": 15
     },
-    "boundary": {
+    "boundaries": {
       "minzoom": 2,
       "maxzoom": 15,
       "simplify_below": 12,
       "simplify_level": 0.0003,
       "simplify_ratio": 2
     },
-    "building": {
+    "buildings": {
       "minzoom": 13,
       "maxzoom": 15
     },
@@ -39,7 +35,7 @@
       "minzoom": 14,
       "maxzoom": 15
     },
-    "poi": {
+    "pois": {
       "minzoom": 11,
       "maxzoom": 15
     },
