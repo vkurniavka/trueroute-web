@@ -45,6 +45,7 @@ SKIP_BUILD=false
 SKIP_D1=false
 D1_ONLY=false
 DRY_RUN=false
+GEOCODE_ONLY=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -68,9 +69,13 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=true
       shift
       ;;
+    --geocode-only)
+      GEOCODE_ONLY=true
+      shift
+      ;;
     *)
       echo "Unknown option: $1" >&2
-      echo "Usage: $0 [--region <id>] [--skip-build] [--skip-d1] [--d1-only] [--dry-run]" >&2
+      echo "Usage: $0 [--region <id>] [--skip-build] [--skip-d1] [--d1-only] [--geocode-only] [--dry-run]" >&2
       exit 1
       ;;
   esac
@@ -183,12 +188,14 @@ sep
 # ===========================================================================
 if ! $SKIP_BUILD; then
   sep
+  GEOCODE_ONLY_FLAG=""
+  $GEOCODE_ONLY && GEOCODE_ONLY_FLAG="--geocode-only"
   if [[ -n "$REGION" ]]; then
-    log "STAGE 1: Building single region: $REGION"
-    "$SCRIPT_DIR/build-region.sh" "$REGION"
+    log "STAGE 1: Building single region: $REGION${GEOCODE_ONLY_FLAG:+ (geocode-only)}"
+    "$SCRIPT_DIR/build-region.sh" "$REGION" $GEOCODE_ONLY_FLAG
   else
-    log "STAGE 1: Building all regions"
-    "$SCRIPT_DIR/build-all-regions.sh"
+    log "STAGE 1: Building all regions${GEOCODE_ONLY_FLAG:+ (geocode-only)}"
+    "$SCRIPT_DIR/build-all-regions.sh" $GEOCODE_ONLY_FLAG
   fi
   log "STAGE 1: Complete"
 else

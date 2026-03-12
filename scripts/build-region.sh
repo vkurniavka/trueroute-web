@@ -33,6 +33,7 @@ die() { log "ERROR: $*" >&2; exit 1; }
 # ---------------------------------------------------------------------------
 REGION_ID="${1:-}"
 UKRAINE_PBF=""
+GEOCODE_ONLY=false
 
 shift || true
 while [[ $# -gt 0 ]]; do
@@ -41,13 +42,17 @@ while [[ $# -gt 0 ]]; do
       UKRAINE_PBF="$2"
       shift 2
       ;;
+    --geocode-only)
+      GEOCODE_ONLY=true
+      shift
+      ;;
     *)
       die "Unknown argument: $1"
       ;;
   esac
 done
 
-[[ -z "$REGION_ID" ]] && die "Usage: $0 <region-id> [--ukraine-pbf /path/to/ukraine-latest.osm.pbf]"
+[[ -z "$REGION_ID" ]] && die "Usage: $0 <region-id> [--ukraine-pbf /path/to/ukraine-latest.osm.pbf] [--geocode-only]"
 
 # ---------------------------------------------------------------------------
 # Check bounding box exists for this region
@@ -71,9 +76,15 @@ log "Region: $REGION_ID  bbox: $BBOX"
 # ---------------------------------------------------------------------------
 # Check required tools
 # ---------------------------------------------------------------------------
-for cmd in tilemaker pmtiles sqlite3 osmium python3 aws curl; do
-  command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
-done
+if $GEOCODE_ONLY; then
+  for cmd in osmium python3 aws; do
+    command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
+  done
+else
+  for cmd in tilemaker pmtiles sqlite3 osmium python3 aws curl; do
+    command -v "$cmd" >/dev/null 2>&1 || die "Required tool not found: $cmd"
+  done
+fi
 
 # ---------------------------------------------------------------------------
 # Check required env vars
@@ -122,6 +133,9 @@ log "Oblast extract complete — $(du -h "$OSM_FILE" | cut -f1)"
 # ===========================================================================
 # Step 1 — PMTiles (tilemaker → MBTiles, pmtiles convert → PMTiles)
 # ===========================================================================
+if $GEOCODE_ONLY; then
+  log "Step 1 (PMTiles): Skipped — geocode-only mode"
+else
 log "Step 1: Building PMTiles (tilemaker → MBTiles → PMTiles)..."
 MBTILES_FILE="$TMPDIR/${REGION_ID}.mbtiles"
 PMTILES_FILE="$TMPDIR/${REGION_ID}.pmtiles"
@@ -150,6 +164,7 @@ aws s3 cp "$PMTILES_FILE" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/maps/${REGION_ID}.pmtiles" \
   --endpoint-url "$R2_ENDPOINT_URL"
 log "Step 1: Upload complete"
+fi # end geocode-only skip
 
 # ===========================================================================
 # Step 2 — Geocode SQLite Index
@@ -182,6 +197,9 @@ log "Step 2: Upload complete"
 # ===========================================================================
 # Step 3 — POI (safety + navigation GeoJSON)
 # ===========================================================================
+if $GEOCODE_ONLY; then
+  log "Step 3 (POI): Skipped — geocode-only mode"
+else
 log "Step 3: Extracting POIs from region PBF..."
 python3 "$SCRIPT_DIR/build-poi-json.py" \
   "$OSM_FILE" \
@@ -204,5 +222,10 @@ aws s3 cp "$TMPDIR/${REGION_ID}-nav-poi.json" \
   "s3://${R2_BUCKET_NAME}/regions/${REGION_ID}/poi/${REGION_ID}-nav-poi.json" \
   --endpoint-url "$R2_ENDPOINT_URL"
 log "Step 3: Upload complete"
+fi # end geocode-only skip
 
-log "Done — $REGION_ID (pmtiles + geocode + poi) complete"
+if $GEOCODE_ONLY; then
+  log "Done — $REGION_ID (geocode only) complete"
+else
+  log "Done — $REGION_ID (pmtiles + geocode + poi) complete"
+fi

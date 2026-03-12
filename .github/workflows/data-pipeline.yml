@@ -13,6 +13,7 @@ on:
           - full           # build all 26 regions → R2, regenerate index, seed D1
           - single-region  # build one region → R2, regenerate index, seed D1
           - reindex-only   # skip build, regenerate index.json from R2, seed D1
+          - geocode-only   # rebuild only geocode DBs for all regions (skip PMTiles + POI)
           - d1-only        # seed D1 from index.json already in R2 (no build, no re-index)
       region:
         description: 'Region ID — required when mode=single-region (e.g. lviv)'
@@ -129,6 +130,7 @@ jobs:
           ARGS="--dry-run"
           [[ "$MODE" == "single-region" ]]  && ARGS="$ARGS --region $REGION"
           [[ "$MODE" == "reindex-only" ]]   && ARGS="$ARGS --skip-build"
+          [[ "$MODE" == "geocode-only" ]]   && ARGS="$ARGS --geocode-only"
           [[ "$MODE" == "d1-only" ]]        && ARGS="$ARGS --d1-only"
           bash scripts/pipeline.sh $ARGS
 
@@ -148,6 +150,7 @@ jobs:
           ARGS=""
           [[ "$MODE" == "single-region" ]]  && ARGS="$ARGS --region $REGION"
           [[ "$MODE" == "reindex-only" ]]   && ARGS="$ARGS --skip-build"
+          [[ "$MODE" == "geocode-only" ]]   && ARGS="$ARGS --geocode-only"
           [[ "$MODE" == "d1-only" ]]        && ARGS="$ARGS --d1-only"
           bash scripts/pipeline.sh $ARGS
 

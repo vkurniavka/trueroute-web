@@ -8,13 +8,16 @@ set -euo pipefail
 # build-region.sh for each region in regions.txt, passing the shared PBF
 # to avoid downloading 1.6 GB × 26 times.
 #
-# Usage: ./scripts/build-all-regions.sh
+# Usage:
+#   ./scripts/build-all-regions.sh
+#   ./scripts/build-all-regions.sh --geocode-only   # rebuild only geocode DBs
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REGIONS_FILE="$SCRIPT_DIR/regions.txt"
 BUILD_SCRIPT="$SCRIPT_DIR/build-region.sh"
 GEOFABRIK_UKRAINE="https://download.geofabrik.de/europe/ukraine-latest.osm.pbf"
+GEOCODE_ONLY_FLAG="${1:-}"
 
 log() { echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"; }
 die() { log "ERROR: $*" >&2; exit 1; }
@@ -50,7 +53,7 @@ while IFS= read -r region || [[ -n "$region" ]]; do
   TOTAL=$((TOTAL + 1))
   log "=== Building region $TOTAL: $region ==="
 
-  if "$BUILD_SCRIPT" "$region" --ukraine-pbf "$UKRAINE_PBF"; then
+  if "$BUILD_SCRIPT" "$region" --ukraine-pbf "$UKRAINE_PBF" $GEOCODE_ONLY_FLAG; then
     PASSED=$((PASSED + 1))
     log "=== PASS: $region ==="
   else

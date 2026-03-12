@@ -8,6 +8,15 @@ from OSM data and builds a full-text search index with proximity support.
 Usage: python3 build-geocode-db.py <input.osm.pbf> <output.db>
 
 Requires: pip install osmium
+
+Schema (compatible with GeocoderRepository.kt):
+  places(id INTEGER PRIMARY KEY,   ← auto-assigned rowid; used as FTS5 content_rowid
+         name TEXT, name_uk TEXT, name_en TEXT,
+         addr_street TEXT, addr_housenumber TEXT, city TEXT,
+         display_name TEXT, lat REAL, lng REAL,
+         type TEXT, rank INTEGER NOT NULL)
+  places_fts  — FTS5 virtual table (content='places', content_rowid='rowid')
+  places_spatial — R-tree proximity index
 """
 
 import os
@@ -20,8 +29,20 @@ import osmium
 
 PLACE_TYPES = frozenset({"city", "town", "village", "hamlet", "suburb", "neighbourhood"})
 
+# Rank values: lower = more important (matches app sort: ORDER BY rank ASC)
+PLACE_RANK = {
+    "city":          1,
+    "town":          5,
+    "village":      10,
+    "hamlet":       15,
+    "suburb":       18,
+    "neighbourhood": 20,
+    "street":       30,
+    "place":        40,
+    "address":      50,
+}
+
 # Ukrainian street name abbreviation normalization pairs
-# Each pair: (abbreviated form, full form)
 UA_STREET_ABBREVS = [
     ("вул.", "вулиця"),
     ("пр.", "проспект"),
@@ -58,11 +79,9 @@ def normalize_street_name(name):
 
     expanded = name
     for abbrev, full in UA_STREET_ABBREVS:
-        # Replace abbreviation with full form (case-insensitive)
         pattern = re.escape(abbrev)
         if re.search(pattern, expanded, re.IGNORECASE):
             expanded = re.sub(pattern, full, expanded, flags=re.IGNORECASE)
-            # Return both forms so either matches
             return f"{name} {expanded}"
 
     return name
@@ -73,6 +92,9 @@ class PlaceHandler(osmium.SimpleHandler):
 
     def __init__(self):
         super().__init__()
+        # Each row: (name, name_uk, name_en, addr_street, addr_housenumber,
+        #            city, display_name, lat, lng, type, rank)
+        # Note: no id column — SQLite assigns INTEGER PRIMARY KEY automatically
         self.places = []
 
     def node(self, n):
@@ -106,11 +128,11 @@ class PlaceHandler(osmium.SimpleHandler):
             place_type = "place"
 
         display_name = build_display_name(addr_street, addr_housenumber, city) if addr_street else name
-        osm_id = f"n{n.id}"
+        rank = PLACE_RANK.get(place_type, 40)
 
         self.places.append(
-            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber,
-             city, display_name, lat, lng, place_type)
+            (name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, place_type, rank)
         )
 
     def way(self, w):
@@ -122,7 +144,6 @@ class PlaceHandler(osmium.SimpleHandler):
         if not addr_housenumber or not addr_street:
             return
 
-        # Compute centroid of the way
         lats = []
         lons = []
         for node in w.nodes:
@@ -142,11 +163,9 @@ class PlaceHandler(osmium.SimpleHandler):
         city = tags.get("addr:city", "")
         display_name = build_display_name(addr_street, addr_housenumber, city)
 
-        osm_id = f"w{w.id}"
-
         self.places.append(
-            (osm_id, name, name_uk, name_en, addr_street, addr_housenumber,
-             city, display_name, lat, lng, "address")
+            (name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, "address", PLACE_RANK["address"])
         )
 
 
@@ -160,9 +179,12 @@ def build_db(input_path, output_path):
     conn = sqlite3.connect(output_path)
     cur = conn.cursor()
 
+    # id INTEGER PRIMARY KEY — SQLite auto-assigns this as the rowid.
+    # GeocoderRepository joins: places p INNER JOIN places_fts fts ON p.id = fts.rowid
+    # This works because INTEGER PRIMARY KEY IS the rowid in SQLite.
     cur.execute(
         """CREATE TABLE places (
-            id TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
             name TEXT,
             name_uk TEXT,
             name_en TEXT,
@@ -172,10 +194,12 @@ def build_db(input_path, output_path):
             display_name TEXT,
             lat REAL,
             lng REAL,
-            type TEXT
+            type TEXT,
+            rank INTEGER NOT NULL DEFAULT 40
         )"""
     )
 
+    # FTS5 content table — content_rowid='rowid' references places.id (= rowid)
     cur.execute(
         """CREATE VIRTUAL TABLE places_fts USING fts5(
             name,
@@ -196,17 +220,19 @@ def build_db(input_path, output_path):
         )"""
     )
 
+    # Insert without id — SQLite assigns auto-increment INTEGER PRIMARY KEY
     cur.executemany(
         """INSERT INTO places
-            (id, name, name_uk, name_en, addr_street, addr_housenumber,
-             city, display_name, lat, lng, type)
+            (name, name_uk, name_en, addr_street, addr_housenumber,
+             city, display_name, lat, lng, type, rank)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         handler.places,
     )
 
+    # Rebuild FTS5 index from content table
     cur.execute("INSERT INTO places_fts(places_fts) VALUES ('rebuild')")
 
-    # Populate R-tree with point entries (min=max for point data)
+    # Populate R-tree (rowid = id = INTEGER PRIMARY KEY)
     cur.execute(
         """INSERT INTO places_spatial (id, min_lat, max_lat, min_lng, max_lng)
            SELECT rowid, lat, lat, lng, lng FROM places"""
@@ -215,7 +241,7 @@ def build_db(input_path, output_path):
     conn.commit()
     conn.close()
 
-    addr_count = sum(1 for p in handler.places if p[10] == "address")
+    addr_count = sum(1 for p in handler.places if p[9] == "address")
     print(f"Inserted {len(handler.places)} places ({addr_count} addresses from nodes+ways)")
 
 

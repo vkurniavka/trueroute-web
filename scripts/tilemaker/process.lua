@@ -146,10 +146,18 @@ function node_function(node)
   -- Address points (addr:housenumber nodes)
   local housenumber = node:Find("addr:housenumber")
   if housenumber ~= "" then
+    -- addr layer: used by the app's internal geocode/address search
     node:Layer("addr", false)
     node:Attribute("housenumber", housenumber)
     local street = node:Find("addr:street")
     if street ~= "" then node:Attribute("street", street) end
+    node:MinZoom(14)
+    -- buildings layer: used by the map style's address_label layer
+    -- (style filter: kind="address", text-field: addr_housenumber, minzoom 18)
+    node:Layer("buildings", false)
+    node:Attribute("kind", "address")
+    node:Attribute("addr_housenumber", housenumber)
+    if street ~= "" then node:Attribute("addr_street", street) end
     node:MinZoom(14)
     return
   end
@@ -164,6 +172,10 @@ function node_function(node)
   if poi then
     node:Layer("pois", false)
     node:Attribute("kind", poi.kind)
+    -- min_zoom attribute is read by the style filter:
+    --   [">=", ["zoom"], ["+", ["get", "min_zoom"], 0]]
+    -- Without this attribute the filter evaluates to false and POI never renders.
+    node:AttributeNumeric("min_zoom", poi.minzoom)
     local name = node:Find("name")
     if name ~= "" then node:Attribute("name", name) end
     local name_uk = node:Find("name:uk")
@@ -287,6 +299,8 @@ function way_function(way)
   if poi then
     way:LayerAsCentroid("pois")
     way:Attribute("kind", poi.kind)
+    -- min_zoom required by style filter: [">=", ["zoom"], ["+", ["get", "min_zoom"], 0]]
+    way:AttributeNumeric("min_zoom", poi.minzoom)
     local name = way:Find("name")
     if name ~= "" then way:Attribute("name", name) end
     local name_uk = way:Find("name:uk")
@@ -308,13 +322,21 @@ function way_function(way)
 
     way:MinZoom(13)
 
-    -- Building address centroids
+    -- Building address centroids:
+    --   addr layer  → app internal geocode/address search
+    --   buildings layer (kind="address") → on-map address_label style layer
     local housenumber = way:Find("addr:housenumber")
     if housenumber ~= "" then
+      local street = way:Find("addr:street")
       way:LayerAsCentroid("addr")
       way:Attribute("housenumber", housenumber)
-      local street = way:Find("addr:street")
       if street ~= "" then way:Attribute("street", street) end
+      way:MinZoom(14)
+
+      way:LayerAsCentroid("buildings")
+      way:Attribute("kind", "address")
+      way:Attribute("addr_housenumber", housenumber)
+      if street ~= "" then way:Attribute("addr_street", street) end
       way:MinZoom(14)
     end
     return
