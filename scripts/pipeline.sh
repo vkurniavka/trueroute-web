@@ -146,7 +146,12 @@ export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
 # ---------------------------------------------------------------------------
 REQUIRED_TOOLS=("aws" "wrangler" "node" "npx")
 if ! $SKIP_BUILD; then
-  REQUIRED_TOOLS+=("tilemaker" "pmtiles" "osmium" "python3" "curl")
+  if $GEOCODE_ONLY; then
+    # geocode-only skips tilemaker and pmtiles — only needs osmium + python3
+    REQUIRED_TOOLS+=("osmium" "python3" "curl")
+  else
+    REQUIRED_TOOLS+=("tilemaker" "pmtiles" "osmium" "python3" "curl")
+  fi
 fi
 
 for cmd in "${REQUIRED_TOOLS[@]}"; do

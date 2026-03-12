@@ -71,11 +71,12 @@ jobs:
       # 3. Install data-pipeline tools (only needed for BUILD stage)
       # -----------------------------------------------------------------------
       - name: Install osmium-tool, tilemaker + Python osmium binding
-        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
+        if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') || (inputs.mode == 'geocode-only') }}
         run: |
           sudo apt-get update -qq
-          # osmium-tool — OSM data filtering (geocode/POI extraction)
-          # tilemaker   — OSM PBF → MBTiles (apt v2.4 does not support PMTiles output)
+          # osmium-tool — OSM data filtering (geocode/POI extraction + bbox extract)
+          # tilemaker   — OSM PBF → MBTiles (skip for geocode-only, but apt installs it anyway)
+          # sqlite3     — geocode DB inspection / seed validation
           sudo apt-get install -y osmium-tool tilemaker sqlite3
           tilemaker --help 2>&1 | head -2 || true
           # Python osmium binding (build-geocode-db.py and build-poi-json.py)
@@ -85,6 +86,7 @@ jobs:
         if: ${{ (github.event_name == 'schedule') || (inputs.mode == 'full') || (inputs.mode == 'single-region') }}
         run: |
           # go-pmtiles: MBTiles → PMTiles conversion step (tilemaker apt build lacks PMTiles output)
+          # Not needed for geocode-only — no PMTiles are built.
           PMTILES_VERSION="1.24.1"
           curl -fsSL \
             "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
