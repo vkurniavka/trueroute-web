@@ -62,9 +62,12 @@ describe('generateSeedSql', () => {
     expect(sql).not.toContain('COMMIT')
   })
 
-  it('inserts Ukraine country row', () => {
+  it('upserts Ukraine country row using ON CONFLICT DO UPDATE (not INSERT OR REPLACE)', () => {
     const sql = generateSeedSql(sampleIndex)
-    expect(sql).toContain("INSERT OR REPLACE INTO countries")
+    // Must use ON CONFLICT upsert — not INSERT OR REPLACE, which would delete the
+    // existing row and break FK references from regions.country_id.
+    expect(sql).not.toContain('INSERT OR REPLACE INTO countries')
+    expect(sql).toContain('ON CONFLICT(code) DO UPDATE SET')
     expect(sql).toContain("'UA'")
     expect(sql).toContain("'Ukraine'")
     expect(sql).toContain("'Україна'")

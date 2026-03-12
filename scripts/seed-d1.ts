@@ -74,9 +74,10 @@ export function generateSeedSql(input: unknown): string {
     '',
     '-- Note: D1 via wrangler handles transactions automatically (no explicit transaction statements needed).',
     '',
-    '-- 1. Upsert country',
-    `INSERT OR REPLACE INTO countries (code, name, name_uk, enabled)` +
-      ` VALUES ('${COUNTRY_CODE}', '${escapeSql(COUNTRY_NAME)}', '${escapeSql(COUNTRY_NAME_UK)}', 1);`,
+    '-- 1. Upsert country (UPDATE in place — preserves id so FK references from regions are not broken)',
+    `INSERT INTO countries (code, name, name_uk, enabled)` +
+      ` VALUES ('${COUNTRY_CODE}', '${escapeSql(COUNTRY_NAME)}', '${escapeSql(COUNTRY_NAME_UK)}', 1)` +
+      ` ON CONFLICT(code) DO UPDATE SET name = excluded.name, name_uk = excluded.name_uk, enabled = excluded.enabled;`,
     '',
     '-- 2. Delete existing data for this country (idempotency)',
     `DELETE FROM region_files WHERE region_id IN (SELECT id FROM regions WHERE country_id = (SELECT id FROM countries WHERE code = '${COUNTRY_CODE}'));`,
