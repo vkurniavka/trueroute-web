@@ -1,0 +1,122 @@
+export const metadata = {
+  title: 'Street or Place Missing from Map',
+  description: 'Why streets, place names, and points of interest may be missing or outdated in TrueRoute — and how to fix the data for everyone.',
+}
+
+export const faqItems = [
+  {
+    question: 'Why is a street missing from TrueRoute maps?',
+    answer: 'TrueRoute maps are built from OpenStreetMap (OSM), a community-maintained open-source map. If a street is missing, it has likely not been added to OpenStreetMap yet. Anyone can add it at openstreetmap.org and the correction will appear in a future TrueRoute map update.',
+  },
+  {
+    question: 'Why can I see a street on the map but not find it in search?',
+    answer: 'The street is drawn on the map but may not be indexed in the place search database. This can happen with recently added or renamed streets. A future map update will include it in search results.',
+  },
+  {
+    question: 'Why does TrueRoute show an old place name that was renamed years ago?',
+    answer: 'TrueRoute uses OpenStreetMap data. If the old name is still in OpenStreetMap, the place will appear with the old name in TrueRoute. You can update the name directly in OpenStreetMap at openstreetmap.org — the corrected name will appear in a future map update.',
+  },
+  {
+    question: 'Why is a fuel station, pharmacy, or hospital not shown in TrueRoute?',
+    answer: 'Points of interest (fuel stations, pharmacies, hospitals, parking) in TrueRoute come from OpenStreetMap. If a place is missing, it has not been added to OpenStreetMap yet, or it was recently opened. You can add it at openstreetmap.org.',
+  },
+  {
+    question: 'How long until my OpenStreetMap edit appears in TrueRoute?',
+    answer: 'TrueRoute rebuilds its maps regularly from the latest OpenStreetMap data. After your edit is accepted into OpenStreetMap, it will appear in TrueRoute when the next map update is published.',
+  },
+]
+
+# Street or Place Missing from Map
+
+TrueRoute map tiles, place search, and points of interest are all built from **OpenStreetMap (OSM)** — a community-maintained open-source map. If something is missing or shows an outdated name, the data either has not been added to OpenStreetMap yet or needs to be updated there.
+
+## Common symptoms
+
+### Street is missing from the map entirely
+
+The road exists in real life but is not drawn on the map.
+
+**Cause:** The street has not been mapped in OpenStreetMap for this area yet.
+
+**Fix:** Add the street to OpenStreetMap. See [How to fix missing data](#how-to-fix-missing-data) below.
+
+### Street is on the map but not found in search
+
+The street is visible when you look at the map but does not appear when you search for it by name.
+
+**Cause:** The street exists in OpenStreetMap but is not yet indexed in the TrueRoute place search database, or the street name in OpenStreetMap is slightly different from what you searched.
+
+**Fix:** Check [openstreetmap.org](https://www.openstreetmap.org) to confirm the street name is correct, then update it if needed.
+
+### Place name is outdated or wrong
+
+A street, neighbourhood, or locality is shown with an old name that was changed years ago.
+
+**Cause:** OpenStreetMap still has the old name. Renaming streets in OpenStreetMap requires a contributor to update the record.
+
+**Fix:** Update the name in OpenStreetMap. See [How to fix missing data](#how-to-fix-missing-data) below.
+
+### Fuel station, pharmacy, hospital, or parking is missing
+
+A point of interest exists in real life but does not appear in TrueRoute.
+
+**Cause:** The location has not been added to OpenStreetMap, or it opened recently and has not been mapped yet.
+
+**Fix:** Add the location to OpenStreetMap.
+
+<ScreenshotPlaceholder label="map screen showing an area with a missing road segment" />
+
+## Where TrueRoute map data comes from
+
+| What you see | Source |
+|---|---|
+| Map tiles (streets, buildings, water) | OpenStreetMap via Geofabrik daily export |
+| Place and street search | OpenStreetMap via Geofabrik daily export |
+| Fuel stations, pharmacies, hospitals, parking | OpenStreetMap amenity data |
+
+TrueRoute rebuilds its maps regularly from the latest OpenStreetMap data. Once a correction is made in OpenStreetMap, it will appear in TrueRoute when the next map update is published.
+
+**OpenStreetMap data for Ukraine:** [download.geofabrik.de/europe/ukraine.html](https://download.geofabrik.de/europe/ukraine.html)
+
+## How to fix missing data
+
+Anyone can edit OpenStreetMap for free. Edits appear in TrueRoute after the next map update.
+
+### Option A — StreetComplete (recommended for mobile)
+
+StreetComplete is a mobile app that makes contributing to OpenStreetMap straightforward. It shows tasks near you — adding missing roads, correcting names, and filling in place details.
+
+1. Install **StreetComplete** from Google Play.
+
+2. Open the app and navigate to the area with missing or incorrect data.
+
+3. Complete the task shown — for example, confirm a road name or add a missing street.
+
+4. Submit the change. It will be reviewed and added to OpenStreetMap.
+
+**Download:** [streetcomplete.app](https://streetcomplete.app)
+
+### Option B — OpenStreetMap iD editor (desktop)
+
+The iD editor is the browser-based editor on openstreetmap.org. Use it for more complex edits such as adding a new road, renaming a street, or adding a business.
+
+1. Go to [openstreetmap.org](https://www.openstreetmap.org) and create a free account.
+
+2. Navigate to the area you want to edit.
+
+3. Tap **Edit** to open the iD editor.
+
+4. Add the missing street, correct the name, or add the missing place.
+
+5. Save your changes with a brief description.
+
+<ScreenshotPlaceholder label="openstreetmap.org iD editor showing an editable street in Lviv" />
+
+## After your edit
+
+OpenStreetMap changes are reviewed by the community and accepted within minutes to a few hours. TrueRoute rebuilds its maps regularly from the latest data. Your correction will appear in TrueRoute after the next map update — you do not need to reinstall the app or re-download the map.
+
+## Related
+
+- [How to Download Offline Maps](/how-to/download-maps)
+- [Map Not Loading — Troubleshooting](/troubleshooting/map-not-loading)
