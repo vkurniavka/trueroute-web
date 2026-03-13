@@ -138,6 +138,27 @@ class PlaceHandler(osmium.SimpleHandler):
     def way(self, w):
         tags = {t.k: t.v for t in w.tags}
 
+        # Named highway ways → streets in the geocode index
+        highway = tags.get("highway", "")
+        name = tags.get("name", "")
+        if highway and name:
+            lats, lons = [], []
+            for node in w.nodes:
+                if node.location.valid():
+                    lats.append(node.location.lat)
+                    lons.append(node.location.lon)
+            if not lats:
+                return
+            lat = sum(lats) / len(lats)
+            lng = sum(lons) / len(lons)
+            name_uk = tags.get("name:uk", "")
+            name_en = tags.get("name:en", "")
+            self.places.append(
+                (name, name_uk, name_en, "", "", "", name,
+                 lat, lng, "street", PLACE_RANK["street"])
+            )
+            return
+
         addr_housenumber = tags.get("addr:housenumber", "")
         addr_street = tags.get("addr:street", "")
 
@@ -241,8 +262,12 @@ def build_db(input_path, output_path):
     conn.commit()
     conn.close()
 
-    addr_count = sum(1 for p in handler.places if p[9] == "address")
-    print(f"Inserted {len(handler.places)} places ({addr_count} addresses from nodes+ways)")
+    addr_count   = sum(1 for p in handler.places if p[9] == "address")
+    street_count = sum(1 for p in handler.places if p[9] == "street")
+    print(
+        f"Inserted {len(handler.places)} places "
+        f"({street_count} streets, {addr_count} addresses from nodes+ways)"
+    )
 
 
 if __name__ == "__main__":

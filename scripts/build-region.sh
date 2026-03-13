@@ -170,7 +170,7 @@ fi # end geocode-only skip
 # Step 2 — Geocode SQLite Index
 # ===========================================================================
 log "Step 2: Filtering OSM for named places + addresses (nodes + ways)..."
-osmium tags-filter "$OSM_FILE" n/name=* \
+osmium tags-filter "$OSM_FILE" n/name=* w/highway=* \
   -o "$TMPDIR/${REGION_ID}-named.osm.pbf" --overwrite
 
 osmium tags-filter "$OSM_FILE" n/addr:street=* n/addr:housenumber=* \

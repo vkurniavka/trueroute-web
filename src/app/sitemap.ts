@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/troubleshooting/gps-signal-lost',
     '/troubleshooting/map-not-loading',
     '/troubleshooting/dead-reckoning-inaccurate',
+    '/troubleshooting/street-or-place-missing',
   ]
 
   return staticRoutes.map((route) => ({
